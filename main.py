@@ -1,3 +1,10 @@
+#buttons translucent
+#rounded corners
+#heading white with black boundary and shadow
+#settings box gradient
+#pop up pannel electronic blue
+#border buttons
+
 import pygame
 import pygame_widgets
 from pygame_widgets.slider import Slider
@@ -9,10 +16,12 @@ from enum import Enum
 
 class State(Enum):
     MAIN_MENU = 1
-    GAME = 2
+    GAME_HODOPHILE = 2
     PAUSE = 3
     MOTIVATION = 4
     SETTINGS = 5
+    MODE_SELECT = 6
+    GAME_HODOPHOBE = 7
 
 STATE = State.MAIN_MENU
 
@@ -27,10 +36,11 @@ ratio = newHeight / SCREEN_HEIGHT
 
 WHITE = (240, 240, 240)
 GRAY = (135, 130, 124)
-RED = (255, 0, 0)
+RED = (156, 50, 50)
 ORANGE = (255, 85, 28)
-CYAN = (23, 129, 133)
+CYAN = (25, 41, 11)
 BLACK = (0, 0, 0)
+DARK_RED = (97, 15, 15)
 
 defaultCursor = pygame.SYSTEM_CURSOR_ARROW
 handCursor = pygame.SYSTEM_CURSOR_HAND
@@ -44,10 +54,6 @@ locations = [
 ]
 
 
-def calculate_score(guess_pos, actual_pos):
-    distance = math.sqrt((guess_pos[0] - actual_pos[0]) ** 2 + (guess_pos[1] - actual_pos[1]) ** 2)
-    score = max(0, 100 - distance/3)
-    return score
 
 class TextInBox:
     def __init__(self, font_location, text_to_print, initial_font_size, x, y, w, h, box_color, font_color, roundedness, transparent=False, hover_color = (0,0,0)):
@@ -88,10 +94,50 @@ class TextInBox:
         self.text_rect = self.text_surface.get_rect(center=(self.x + self.w // 2, self.y + self.h // 2))
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
 
-    def render(self, screen,):
+    def render(self, screen):
         if not self.transparent:
             pygame.draw.rect(screen, self.box_color, (self.x, self.y, self.w, self.h), border_radius=self.current_roundedness)
         screen.blit(self.text_surface, self.text_rect)
+
+class newSlider:
+    def __init__(self, x, y, w, h, min, max, colour, handleColour, handleRadius, initial):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.min = min
+        self.max = max
+        self.colour = colour
+        self.handleColour = handleColour
+        self.handleRadius = handleRadius
+        self.initial = initial
+
+    def render(self, screen):
+        Slider(screen, self.x, self.y, self.w, self.h, min=self.min, max = self.max, colour = self.colour, handleColour = self.handleColour, handleRadius = self.handleRadius, initial = self.initial)
+
+    def update_dimensions(self, ratio, screen):
+        Slider(screen, int(ratio*self.x), int(ratio*self.y), int(ratio*self.w), int(ratio*self.h), min=self.min, max = self.max, colour = self.colour, handleColour = self.handleColour, handleRadius = self.handleRadius, initial = self.initial)
+
+class Page:
+    def __init__(self):
+        self.buttonList = []
+        self.boxList = []
+        self.sliderList = []
+        self.background = None
+
+    def resizePage(self, ratio, screen):
+        for box in self.boxList:
+            box.update_dimensions(ratio)
+        for button in self.buttonList:
+            button.update_dimensions(ratio)
+        for slideri in self.sliderList:
+            slideri.update_dimensions(ratio, screen)
+
+    def renderBoxes(self, screen):
+        for box in self.boxList:
+            box.render(screen)
+        for button in self.buttonList:
+            button.render(screen)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("IITDGuessr")
@@ -99,19 +145,18 @@ pygame.display.set_caption("IITDGuessr")
 main_menu_bg = pygame.image.load("home_page.jpg")
 texture_main_menu_bg = main_menu_bg.convert()
 
-# play_button_clicked = False
-# showing_location = False
-# location_image = None
-# current_location = None
-# total_score = 0
-# actual_location_shown = False
-
 pygame.mixer.music.load('bgm.mp3')
 pygame.mixer.music.play(-1)
 
 running = True
 initialised_main_menu = False
-initalised_settings = False
+initialised_settings = False
+initialised_mode_select = False
+
+show_information_box_1 = False
+show_information_box_2 = False
+
+menu_page = Page()
 
 while running:
     if STATE == State.MAIN_MENU:
@@ -123,49 +168,36 @@ while running:
             quit_button = TextInBox("fonts/Quick Starter.ttf", "QUIT GAME", 20, SCREEN_WIDTH // 2 - 90, SCREEN_HEIGHT // 2 + 125, 180, 35, RED, WHITE, 5)
             createdby_box = TextInBox("fonts/ARIBL0.ttf", "Created by", 13, 750, 420, 0, 0, BLACK, WHITE, 0, True, BLACK)
             s_and_a_box = TextInBox("fonts/ARIBL0.ttf", "SK and ASD", 13, 750, 440, 0, 0, BLACK, WHITE, 0, True, BLACK)
-            iitd_guessr = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", 70, SCREEN_WIDTH // 2 - 90, 70, 160, 40, BLACK, CYAN, 5, transparent = True)
+            iitd_guessr = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", 70, SCREEN_WIDTH // 2 - 90, 70, 160, 40, BLACK, WHITE, 5, transparent = True)
+            iitd_guessr_outline = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", 70, SCREEN_WIDTH // 2 - 90, 70, 160, 40, BLACK, WHITE, 5, transparent = True)
+            menu_page.buttonList = [play_button, settings_button, motivation_button, quit_button]
+            menu_page.boxList = [createdby_box, s_and_a_box, iitd_guessr_outline, iitd_guessr]
 
             if ratio != 1:
-                play_button.update_dimensions(ratio)
-                motivation_button.update_dimensions(ratio)
-                settings_button.update_dimensions(ratio)
-                quit_button.update_dimensions(ratio)
-                iitd_guessr.update_dimensions(ratio)
-                createdby_box.update_dimensions(ratio)
-                s_and_a_box.update_dimensions(ratio)
+                menu_page.resizePage(ratio, screen)
 
             initialised_main_menu = True
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
-                if play_button.rect.collidepoint(mouse_pos):
-                    pygame.mouse.set_cursor(handCursor)
-                    play_button.box_color = ORANGE
-                elif motivation_button.rect.collidepoint(mouse_pos):
-                    pygame.mouse.set_cursor(handCursor)
-                    motivation_button.box_color = ORANGE
+                for button in menu_page.buttonList:
+                    if button.rect.collidepoint(mouse_pos):
+                        button.box_color = ORANGE
+                    else:
+                        button.box_color = RED
 
-                elif settings_button.rect.collidepoint(mouse_pos):
+                if any(button.rect.collidepoint(mouse_pos) for button in menu_page.buttonList):
                     pygame.mouse.set_cursor(handCursor)
-                    settings_button.box_color = ORANGE
-
-                elif quit_button.rect.collidepoint(mouse_pos):
-                    pygame.mouse.set_cursor(handCursor)
-                    quit_button.box_color = ORANGE
-
                 else:
                     pygame.mouse.set_cursor(defaultCursor)
-                    play_button.box_color = RED
-                    motivation_button.box_color = RED
-                    settings_button.box_color = RED
-                    quit_button.box_color = RED
-            
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if play_button.rect.collidepoint(mouse_pos):
-                    STATE = State.GAME
+                    STATE = State.MODE_SELECT
                 elif motivation_button.rect.collidepoint(mouse_pos):
                     STATE = State.MOTIVATION
                 elif settings_button.rect.collidepoint(mouse_pos):
@@ -183,13 +215,14 @@ while running:
                 ratio = newWidth/SCREEN_WIDTH
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 
-                play_button.update_dimensions(ratio)
-                motivation_button.update_dimensions(ratio)
-                settings_button.update_dimensions(ratio)
-                quit_button.update_dimensions(ratio)
-                iitd_guessr.update_dimensions(ratio)
-                createdby_box.update_dimensions(ratio)
-                s_and_a_box.update_dimensions(ratio)
+                # play_button.update_dimensions(ratio)
+                # motivation_button.update_dimensions(ratio)
+                # settings_button.update_dimensions(ratio)
+                # quit_button.update_dimensions(ratio)
+                # iitd_guessr.update_dimensions(ratio)
+                # createdby_box.update_dimensions(ratio)
+                # s_and_a_box.update_dimensions(ratio)
+                menu_page.resizePage(ratio, screen)
 
         screen.blit(pygame.transform.scale(main_menu_bg, (newWidth, newHeight)), (0, 0 ))
 
@@ -200,16 +233,15 @@ while running:
         iitd_guessr.render(screen)    
         createdby_box.render(screen)
         s_and_a_box.render(screen)
-        pygame.display.flip()
 
         if STATE != State.MAIN_MENU:
             initialised_main_menu = False
 
 
     if STATE == State.SETTINGS:
-        if not initalised_settings:
+        if not initialised_settings:
             pygame.mouse.set_cursor(defaultCursor)
-            settings_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 0, 0, SCREEN_WIDTH//2, SCREEN_HEIGHT, GRAY, GRAY, int(5), hover_color=GRAY)
+            settings_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 0, 0, SCREEN_WIDTH//2, SCREEN_HEIGHT, GRAY, GRAY, int(30), hover_color=GRAY)
             settings_box = TextInBox("fonts/Quick Starter.ttf", "SETTINGS", int(40), SCREEN_WIDTH//4, int(40), 0, 0, RED, RED, 0, True, RED)
             volume_box = TextInBox("fonts/Quick Starter.ttf", "MUSIC VOLUME", int(18), int(80), int(90), int(70), int(20), RED, RED, int(5), transparent= True, hover_color=RED)
             volume_slider = Slider(screen, int(230), int(95), int(140), int(5), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10), initial = 100)
@@ -223,7 +255,7 @@ while running:
                 vol = volume_slider.getValue()
                 back_button.update_dimensions(ratio)
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10*ratio), initial = vol)
-            initalised_settings = True
+            initialised_settings = True
             continue
 
         events = pygame.event.get()
@@ -273,61 +305,131 @@ while running:
         pygame_widgets.update(events)
         volume = volume_slider.getValue()
         pygame.mixer.music.set_volume(float(volume/100))
-        pygame.display.flip()
 
         if STATE != State.SETTINGS:
             initialised_settings = False
 
-    # if STATE == State.GAME:
-    #     for event in pygame.event.get():
-    #         if event.type == pygame.QUIT:
-    #             running = False
-    #         elif event.type == pygame.WINDOWRESIZED:
-            
+
+    if STATE == State.MODE_SELECT:
+
+        if not initialised_mode_select:
+
+            hodophilic_box = TextInBox("fonts/Quick Starter.ttf", "HODOPHILIC", 45, x = SCREEN_WIDTH//2-360, y = 260, w = 385, h = 70, box_color=RED, font_color=WHITE, roundedness=20, transparent=False)
+            hodophilic_bg = TextInBox("fonts/Quick Starter.ttf", "", 45, x = SCREEN_WIDTH//2-360, y = 265, w = 385, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=20, transparent=False)
+            hodophobic_box = TextInBox("fonts/Quick Starter.ttf", "HODOPHOBIC", 45, x = SCREEN_WIDTH//2-50, y = 350, w = 410, h = 70, box_color=RED, font_color=WHITE, roundedness=20, transparent=False)
+            hodophobic_bg = TextInBox("fonts/Quick Starter.ttf", "", 45, x = SCREEN_WIDTH//2-50, y = 355, w = 410, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=20, transparent=False)
+            choose_your_box = TextInBox("fonts/Quick Starter.ttf", "CHOOSE YOUR", 50, x = 340, y = 5, w = 410, h = 70, box_color=DARK_RED, font_color=CYAN, roundedness=0, transparent=True)
+            game_mode_box = TextInBox("fonts/Quick Starter.ttf", "GAME MODE", 50, x = 372, y = 50, w = 410, h = 70, box_color=DARK_RED, font_color=CYAN, roundedness=0, transparent=True)
+
+            information_box = TextInBox("fonts/Quick Starter.ttf", "", 50, x = 10, y = 10, w = 280, h = 140, box_color=GRAY, font_color=CYAN, roundedness=10, transparent=False)
+            philic_line_1 = TextInBox("fonts/Quick Starter.ttf", "TRAVEL AROUND CAMPUS", 15, x = 10, y = 50, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+            philic_line_2 = TextInBox("fonts/Quick Starter.ttf", "AND DISCOVER NEW", 15, x = 10, y = 80, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+            philic_line_3 = TextInBox("fonts/Quick Starter.ttf", "SPOTS AND LOCATIONS!", 15, x = 10, y = 110, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+
+            phobic_line_1 = TextInBox("fonts/Quick Starter.ttf", "FIND OUT SECRET", 15, x = 10, y = 50, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+            phobic_line_2 = TextInBox("fonts/Quick Starter.ttf", "CORNERS WITHOUT", 15, x = 10, y = 80, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+            phobic_line_3 = TextInBox("fonts/Quick Starter.ttf", "MOVING FROM YOUR BED!", 15, x = 10, y = 110, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+
+            if ratio != 1:
+                hodophilic_box.update_dimensions(ratio)
+                hodophilic_bg.update_dimensions(ratio)
+                hodophobic_box.update_dimensions(ratio)
+                hodophobic_bg.update_dimensions(ratio)
+                choose_your_box.update_dimensions(ratio)
+                game_mode_box.update_dimensions(ratio)
+                information_box.update_dimensions(ratio)
+                philic_line_1.update_dimensions(ratio)
+                philic_line_2.update_dimensions(ratio)
+                philic_line_3.update_dimensions(ratio)
+                philic_line_1.update_dimensions(ratio)
+                phobic_line_2.update_dimensions(ratio)
+                phobic_line_3.update_dimensions(ratio)
+            initialised_mode_select = True
+            continue
+
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.VIDEORESIZE:
+                newWidth, newHeight = event.size
+                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
+                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
+                else:
+                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
+                
+                ratio = newWidth/SCREEN_WIDTH
+                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+
+                hodophilic_box.update_dimensions(ratio)
+                hodophilic_bg.update_dimensions(ratio)
+                hodophobic_bg.update_dimensions(ratio)
+                hodophobic_box.update_dimensions(ratio)
+                choose_your_box.update_dimensions(ratio)
+                game_mode_box.update_dimensions(ratio)
+                information_box.update_dimensions(ratio)
+                philic_line_1.update_dimensions(ratio)
+                philic_line_2.update_dimensions(ratio)
+                philic_line_3.update_dimensions(ratio)
+                phobic_line_1.update_dimensions(ratio)
+                phobic_line_2.update_dimensions(ratio)
+                phobic_line_3.update_dimensions(ratio)
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = event.pos
+                if hodophilic_box.rect.collidepoint(mouse_pos):
+                    pygame.mouse.set_cursor(handCursor)
+                    hodophilic_box.box_color = ORANGE
+                    hodophilic_box.update_dimensions(ratio)
+                    show_information_box_1 = True
+                elif hodophobic_box.rect.collidepoint(mouse_pos):
+                    pygame.mouse.set_cursor(handCursor)
+                    hodophobic_box.box_color = ORANGE
+                    hodophobic_box.update_dimensions(ratio)
+                    show_information_box_2 = True
+                else:
+                    hodophilic_box.box_color = RED
+                    hodophobic_box.box_color = RED
+                    pygame.mouse.set_cursor(defaultCursor)
+                    hodophilic_box.update_dimensions(ratio)
+                    hodophilic_bg.update_dimensions(ratio)
+                    hodophobic_box.update_dimensions(ratio)
+                    hodophobic_bg.update_dimensions(ratio)
+                    show_information_box_1 = False
+                    show_information_box_2 = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if hodophilic_box.rect.collidepoint(mouse_pos):
+                    STATE = State.GAME_HODOPHILE
+                elif hodophobic_box.rect.collidepoint(mouse_pos):
+                    STATE = State.GAME_HODOPHOBE
+
+
+        screen.blit(pygame.transform.scale(main_menu_bg, (newWidth, newHeight)), (0, 0))
+        hodophilic_bg.render(screen)
+        hodophilic_box.render(screen)
+        hodophobic_bg.render(screen)
+        hodophobic_box.render(screen)
+        choose_your_box.render(screen)
+        game_mode_box.render(screen)
+
+        if show_information_box_1:
+            information_box.render(screen)
+            philic_line_1.render(screen)
+            philic_line_2.render(screen)
+            philic_line_3.render(screen)
+
+        if show_information_box_2:
+            information_box.render(screen)
+            phobic_line_1.render(screen)
+            phobic_line_2.render(screen)
+            phobic_line_3.render(screen)
+
         
-    #     elif event.type == pygame.MOUSEBUTTONDOWN:
-    #         mouse_pos = event.pos
-    #         # Calculate the map's area on screen
-    #         map_start_x = int(SCREEN_WIDTH * 1 / 5)
-    #         map_end_x = SCREEN_WIDTH
-    #         if not play_button_clicked:
-    #             if play_button.text_rect.collidepoint(mouse_pos):
-    #                 play_button_clicked = True
-    #                 showing_location = True
-    #                 current_location = random.choice(locations)
-    #                 location_image = load_location_image(current_location[0], (int(SCREEN_WIDTH * 4 / 5), SCREEN_HEIGHT//(2)))
-    #         elif showing_location:
-    #             showing_location = False
-    #         elif play_button_clicked and not showing_location and not actual_location_shown:
-    #             if map_start_x <= mouse_pos[0] <= map_end_x:
-    #                 # Calculate relative mouse position on the map
-    #                 relative_mouse_pos = (mouse_pos[0] - map_start_x, mouse_pos[1])
-    #                 map_relative_pos = (relative_mouse_pos[0] * campus_map_image.get_width() // (SCREEN_WIDTH * 4 // 5), relative_mouse_pos[1] * campus_map_image.get_height() // SCREEN_HEIGHT)
-    #                 round_score = int(calculate_score(map_relative_pos, current_location[1]))
-    #                 total_score += round_score
-    #                 print(f"Guess made at {map_relative_pos}, actual location is {current_location[1]}. Round Score: {round_score}, Total Score: {total_score}")
-    #                 actual_location_shown = True
-    #         elif actual_location_shown:
-    #             showing_location = True
-    #             play_button_clicked = True
-    #             actual_location_shown = False
-    #             current_location = random.choice(locations)
-    #             location_image = load_location_image(current_location[0], (int(SCREEN_WIDTH * 4 / 5), SCREEN_HEIGHT//(2)))
+        if STATE != State.MODE_SELECT:
+            initialised_mode_select = False
 
 
-    # if not play_button_clicked:
-    #     screen.blit(pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT)), (0, 0))
-    #     play_button.render(screen)
-    # elif showing_location:
-    #     screen.blit(pygame.transform.scale(location_image, (int(SCREEN_WIDTH * 1 / 5), SCREEN_HEIGHT//(2))), (0, 0))
-    # else:
-    #     map_surface = pygame.transform.scale(campus_map_image, (int(SCREEN_WIDTH * 4 / 5), SCREEN_HEIGHT))
-    #     screen.blit(map_surface, (int(SCREEN_WIDTH * 1 / 5), 0))
-    #     if actual_location_shown:
-    #         # Adjust the position of the red dot relative to the scaled map
-    #         adjusted_dot_pos = (int(current_location[1][0] * (SCREEN_WIDTH * 4 / 5) / campus_map_image.get_width() + SCREEN_WIDTH * 1 / 5), int(current_location[1][1] * SCREEN_HEIGHT / campus_map_image.get_height()))
-    #         pygame.draw.circle(screen, RED, adjusted_dot_pos, 5)
-
+    pygame.display.flip()
 
 pygame.quit()
 sys.exit()
