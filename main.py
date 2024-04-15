@@ -201,24 +201,9 @@ while running:
                 ratio = newWidth/SCREEN_WIDTH
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 
-                # play_button.update_dimensions(ratio)
-                # motivation_button.update_dimensions(ratio)
-                # settings_button.update_dimensions(ratio)
-                # quit_button.update_dimensions(ratio)
-                # iitd_guessr.update_dimensions(ratio)
-                # createdby_box.update_dimensions(ratio)
-                # s_and_a_box.update_dimensions(ratio)
                 menu_page.resizePage(ratio)
 
         screen.blit(pygame.transform.scale(main_menu_bg, (newWidth, newHeight)), (0, 0 ))
-
-        # play_button.render(screen)
-        # motivation_button.render(screen)
-        # settings_button.render(screen)
-        # quit_button.render(screen)
-        # iitd_guessr.render(screen)    
-        # createdby_box.render(screen)
-        # s_and_a_box.render(screen)
         menu_page.renderBoxes(screen)
         menu_page.renderButtons(screen)
 
@@ -239,11 +224,6 @@ while running:
             settings_page.boxList = [settings_container, settings_box, volume_box, iitdguessr_box]
             settings_page.buttonList = [back_button]
             if ratio != 1:
-                # settings_container.update_dimensions(ratio)
-                # settings_box.update_dimensions(ratio)
-                # volume_box.update_dimensions(ratio)
-                # iitdguessr_box.update_dimensions(ratio)
-                # back_button.update_dimensions(ratio)
                 settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10*ratio), initial = vol)
@@ -328,19 +308,6 @@ while running:
             information_page_2.boxList = [information_box_2, phobic_line_1, phobic_line_2, phobic_line_3]
 
             if ratio != 1:
-                # hodophilic_box.update_dimensions(ratio)
-                # hodophilic_bg.update_dimensions(ratio)
-                # hodophobic_box.update_dimensions(ratio)
-                # hodophobic_bg.update_dimensions(ratio)
-                # choose_your_box.update_dimensions(ratio)
-                # game_mode_box.update_dimensions(ratio)
-                # information_box.update_dimensions(ratio)
-                # philic_line_1.update_dimensions(ratio)
-                # philic_line_2.update_dimensions(ratio)
-                # philic_line_3.update_dimensions(ratio)
-                # philic_line_1.update_dimensions(ratio)
-                # phobic_line_2.update_dimensions(ratio)
-                # phobic_line_3.update_dimensions(ratio)
                 mode_select_page.resizePage(ratio)
                 information_page_1.resizePage(ratio)
                 information_page_2.resizePage(ratio)
