@@ -99,45 +99,25 @@ class TextInBox:
             pygame.draw.rect(screen, self.box_color, (self.x, self.y, self.w, self.h), border_radius=self.current_roundedness)
         screen.blit(self.text_surface, self.text_rect)
 
-class newSlider:
-    def __init__(self, x, y, w, h, min, max, colour, handleColour, handleRadius, initial):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.min = min
-        self.max = max
-        self.colour = colour
-        self.handleColour = handleColour
-        self.handleRadius = handleRadius
-        self.initial = initial
-
-    def render(self, screen):
-        Slider(screen, self.x, self.y, self.w, self.h, min=self.min, max = self.max, colour = self.colour, handleColour = self.handleColour, handleRadius = self.handleRadius, initial = self.initial)
-
-    def update_dimensions(self, ratio, screen):
-        Slider(screen, int(ratio*self.x), int(ratio*self.y), int(ratio*self.w), int(ratio*self.h), min=self.min, max = self.max, colour = self.colour, handleColour = self.handleColour, handleRadius = self.handleRadius, initial = self.initial)
-
 class Page:
     def __init__(self):
         self.buttonList = []
         self.boxList = []
-        self.sliderList = []
         self.background = None
 
-    def resizePage(self, ratio, screen):
+    def resizePage(self, ratio):
         for box in self.boxList:
             box.update_dimensions(ratio)
         for button in self.buttonList:
             button.update_dimensions(ratio)
-        for slideri in self.sliderList:
-            slideri.update_dimensions(ratio, screen)
 
     def renderBoxes(self, screen):
         for box in self.boxList:
             box.render(screen)
+    def renderButtons(self,screen):
         for button in self.buttonList:
             button.render(screen)
+
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("IITDGuessr")
@@ -157,6 +137,10 @@ show_information_box_1 = False
 show_information_box_2 = False
 
 menu_page = Page()
+settings_page = Page()
+mode_select_page = Page()
+information_page_1 = Page()
+information_page_2 = Page()
 
 while running:
     if STATE == State.MAIN_MENU:
@@ -174,7 +158,7 @@ while running:
             menu_page.boxList = [createdby_box, s_and_a_box, iitd_guessr_outline, iitd_guessr]
 
             if ratio != 1:
-                menu_page.resizePage(ratio, screen)
+                menu_page.resizePage(ratio)
 
             initialised_main_menu = True
         
@@ -194,6 +178,8 @@ while running:
                 else:
                     pygame.mouse.set_cursor(defaultCursor)
 
+
+            #FIX THIS!!!!!
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if play_button.rect.collidepoint(mouse_pos):
@@ -222,17 +208,20 @@ while running:
                 # iitd_guessr.update_dimensions(ratio)
                 # createdby_box.update_dimensions(ratio)
                 # s_and_a_box.update_dimensions(ratio)
-                menu_page.resizePage(ratio, screen)
+                menu_page.resizePage(ratio)
 
         screen.blit(pygame.transform.scale(main_menu_bg, (newWidth, newHeight)), (0, 0 ))
 
-        play_button.render(screen)
-        motivation_button.render(screen)
-        settings_button.render(screen)
-        quit_button.render(screen)
-        iitd_guessr.render(screen)    
-        createdby_box.render(screen)
-        s_and_a_box.render(screen)
+        # play_button.render(screen)
+        # motivation_button.render(screen)
+        # settings_button.render(screen)
+        # quit_button.render(screen)
+        # iitd_guessr.render(screen)    
+        # createdby_box.render(screen)
+        # s_and_a_box.render(screen)
+        menu_page.renderBoxes(screen)
+        menu_page.renderButtons(screen)
+
 
         if STATE != State.MAIN_MENU:
             initialised_main_menu = False
@@ -247,13 +236,16 @@ while running:
             volume_slider = Slider(screen, int(230), int(95), int(140), int(5), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10), initial = 100)
             iitdguessr_box = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(40), (SCREEN_WIDTH * 3) // 4 - int(90), int(70), int(160), int(40), BLACK, CYAN, int(5), transparent = True)
             back_button = TextInBox("fonts/Quick Starter.ttf", "BACK", 25, 30, 410, 80, 25, BLACK, RED, 0, True)
+            settings_page.boxList = [settings_container, settings_box, volume_box, iitdguessr_box]
+            settings_page.buttonList = [back_button]
             if ratio != 1:
-                settings_container.update_dimensions(ratio)
-                settings_box.update_dimensions(ratio)
-                volume_box.update_dimensions(ratio)
-                iitdguessr_box.update_dimensions(ratio)
+                # settings_container.update_dimensions(ratio)
+                # settings_box.update_dimensions(ratio)
+                # volume_box.update_dimensions(ratio)
+                # iitdguessr_box.update_dimensions(ratio)
+                # back_button.update_dimensions(ratio)
+                settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
-                back_button.update_dimensions(ratio)
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10*ratio), initial = vol)
             initialised_settings = True
             continue
@@ -272,23 +264,23 @@ while running:
                 ratio = newWidth/SCREEN_WIDTH
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 
-                settings_box.update_dimensions(ratio)
-                settings_container.update_dimensions(ratio)
-                volume_box.update_dimensions(ratio)
-                iitdguessr_box.update_dimensions(ratio)
-                back_button.update_dimensions(ratio)
+                settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10*ratio), initial = vol)
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
-                if back_button.text_rect.collidepoint(mouse_pos):
+                for button in settings_page.buttonList:
+                    if button.text_rect.collidepoint(mouse_pos):
+                        button.font_color = ORANGE
+                    else:
+                        button.font_color = RED
+                settings_page.resizePage(ratio)
+
+                if any(button.text_rect.collidepoint(mouse_pos) for button in settings_page.buttonList):
                     pygame.mouse.set_cursor(handCursor)
-                    back_button.font_color = ORANGE
-                    back_button.update_dimensions(ratio)
                 else:
-                    back_button.font_color = RED
                     pygame.mouse.set_cursor(defaultCursor)
-                    back_button.update_dimensions(ratio)
+                
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if back_button.text_rect.collidepoint(mouse_pos):
@@ -320,30 +312,38 @@ while running:
             hodophobic_bg = TextInBox("fonts/Quick Starter.ttf", "", 45, x = SCREEN_WIDTH//2-50, y = 355, w = 410, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=20, transparent=False)
             choose_your_box = TextInBox("fonts/Quick Starter.ttf", "CHOOSE YOUR", 50, x = 340, y = 5, w = 410, h = 70, box_color=DARK_RED, font_color=CYAN, roundedness=0, transparent=True)
             game_mode_box = TextInBox("fonts/Quick Starter.ttf", "GAME MODE", 50, x = 372, y = 50, w = 410, h = 70, box_color=DARK_RED, font_color=CYAN, roundedness=0, transparent=True)
+            mode_select_page.buttonList = [hodophilic_box, hodophobic_box]
+            mode_select_page.boxList = [hodophilic_bg, hodophobic_bg, choose_your_box, game_mode_box]
 
-            information_box = TextInBox("fonts/Quick Starter.ttf", "", 50, x = 10, y = 10, w = 280, h = 140, box_color=GRAY, font_color=CYAN, roundedness=10, transparent=False)
+            information_box_1 = TextInBox("fonts/Quick Starter.ttf", "", 50, x = 10, y = 10, w = 280, h = 140, box_color=GRAY, font_color=CYAN, roundedness=10, transparent=False)
             philic_line_1 = TextInBox("fonts/Quick Starter.ttf", "TRAVEL AROUND CAMPUS", 15, x = 10, y = 50, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
             philic_line_2 = TextInBox("fonts/Quick Starter.ttf", "AND DISCOVER NEW", 15, x = 10, y = 80, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
             philic_line_3 = TextInBox("fonts/Quick Starter.ttf", "SPOTS AND LOCATIONS!", 15, x = 10, y = 110, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+            information_page_1.boxList = [information_box_1, philic_line_1, philic_line_2, philic_line_3]
 
+            information_box_2 = TextInBox("fonts/Quick Starter.ttf", "", 50, x = 10, y = 10, w = 280, h = 140, box_color=GRAY, font_color=CYAN, roundedness=10, transparent=False)
             phobic_line_1 = TextInBox("fonts/Quick Starter.ttf", "FIND OUT SECRET", 15, x = 10, y = 50, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
             phobic_line_2 = TextInBox("fonts/Quick Starter.ttf", "CORNERS WITHOUT", 15, x = 10, y = 80, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
             phobic_line_3 = TextInBox("fonts/Quick Starter.ttf", "MOVING FROM YOUR BED!", 15, x = 10, y = 110, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
+            information_page_2.boxList = [information_box_2, phobic_line_1, phobic_line_2, phobic_line_3]
 
             if ratio != 1:
-                hodophilic_box.update_dimensions(ratio)
-                hodophilic_bg.update_dimensions(ratio)
-                hodophobic_box.update_dimensions(ratio)
-                hodophobic_bg.update_dimensions(ratio)
-                choose_your_box.update_dimensions(ratio)
-                game_mode_box.update_dimensions(ratio)
-                information_box.update_dimensions(ratio)
-                philic_line_1.update_dimensions(ratio)
-                philic_line_2.update_dimensions(ratio)
-                philic_line_3.update_dimensions(ratio)
-                philic_line_1.update_dimensions(ratio)
-                phobic_line_2.update_dimensions(ratio)
-                phobic_line_3.update_dimensions(ratio)
+                # hodophilic_box.update_dimensions(ratio)
+                # hodophilic_bg.update_dimensions(ratio)
+                # hodophobic_box.update_dimensions(ratio)
+                # hodophobic_bg.update_dimensions(ratio)
+                # choose_your_box.update_dimensions(ratio)
+                # game_mode_box.update_dimensions(ratio)
+                # information_box.update_dimensions(ratio)
+                # philic_line_1.update_dimensions(ratio)
+                # philic_line_2.update_dimensions(ratio)
+                # philic_line_3.update_dimensions(ratio)
+                # philic_line_1.update_dimensions(ratio)
+                # phobic_line_2.update_dimensions(ratio)
+                # phobic_line_3.update_dimensions(ratio)
+                mode_select_page.resizePage(ratio)
+                information_page_1.resizePage(ratio)
+                information_page_2.resizePage(ratio)
             initialised_mode_select = True
             continue
 
@@ -361,41 +361,34 @@ while running:
                 ratio = newWidth/SCREEN_WIDTH
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 
-                hodophilic_box.update_dimensions(ratio)
-                hodophilic_bg.update_dimensions(ratio)
-                hodophobic_bg.update_dimensions(ratio)
-                hodophobic_box.update_dimensions(ratio)
-                choose_your_box.update_dimensions(ratio)
-                game_mode_box.update_dimensions(ratio)
-                information_box.update_dimensions(ratio)
-                philic_line_1.update_dimensions(ratio)
-                philic_line_2.update_dimensions(ratio)
-                philic_line_3.update_dimensions(ratio)
-                phobic_line_1.update_dimensions(ratio)
-                phobic_line_2.update_dimensions(ratio)
-                phobic_line_3.update_dimensions(ratio)
+                mode_select_page.resizePage(ratio)
+                information_page_1.resizePage(ratio)
+                information_page_2.resizePage(ratio)
+
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
-                if hodophilic_box.rect.collidepoint(mouse_pos):
+                for button in mode_select_page.buttonList:
+                    if button.text_rect.collidepoint(mouse_pos):
+                        button.box_color = ORANGE
+                        
+                        if button is hodophilic_box:
+                            show_information_box_1 = True
+                            break
+                        else:
+                            show_information_box_2 = True
+                            break
+                    else:
+                        button.box_color = RED
+                        show_information_box_1 = False
+                        show_information_box_2 = False
+                
+                mode_select_page.resizePage(ratio)
+
+                if any(button.rect.collidepoint(mouse_pos) for button in mode_select_page.buttonList):
                     pygame.mouse.set_cursor(handCursor)
-                    hodophilic_box.box_color = ORANGE
-                    hodophilic_box.update_dimensions(ratio)
-                    show_information_box_1 = True
-                elif hodophobic_box.rect.collidepoint(mouse_pos):
-                    pygame.mouse.set_cursor(handCursor)
-                    hodophobic_box.box_color = ORANGE
-                    hodophobic_box.update_dimensions(ratio)
-                    show_information_box_2 = True
                 else:
-                    hodophilic_box.box_color = RED
-                    hodophobic_box.box_color = RED
                     pygame.mouse.set_cursor(defaultCursor)
-                    hodophilic_box.update_dimensions(ratio)
-                    hodophilic_bg.update_dimensions(ratio)
-                    hodophobic_box.update_dimensions(ratio)
-                    hodophobic_bg.update_dimensions(ratio)
-                    show_information_box_1 = False
-                    show_information_box_2 = False
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if hodophilic_box.rect.collidepoint(mouse_pos):
@@ -405,24 +398,17 @@ while running:
 
 
         screen.blit(pygame.transform.scale(main_menu_bg, (newWidth, newHeight)), (0, 0))
-        hodophilic_bg.render(screen)
-        hodophilic_box.render(screen)
-        hodophobic_bg.render(screen)
-        hodophobic_box.render(screen)
-        choose_your_box.render(screen)
-        game_mode_box.render(screen)
+        mode_select_page.renderBoxes(screen)
+        mode_select_page.renderButtons(screen)
+
+        print("1:", show_information_box_1)
+        print("2:", show_information_box_2)
 
         if show_information_box_1:
-            information_box.render(screen)
-            philic_line_1.render(screen)
-            philic_line_2.render(screen)
-            philic_line_3.render(screen)
+            information_page_1.renderBoxes(screen)
 
         if show_information_box_2:
-            information_box.render(screen)
-            phobic_line_1.render(screen)
-            phobic_line_2.render(screen)
-            phobic_line_3.render(screen)
+            information_page_2.renderBoxes(screen)
 
         
         if STATE != State.MODE_SELECT:
