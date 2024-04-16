@@ -1,14 +1,14 @@
-# Jwala Circle : 28.549051, 77.184498
-# Himadri Circle : 28.544856, 77.194436
-# SAC Circle : 28.546737, 77.185113
-
 import platform
 import time
 import math
+import subprocess as sp
+import re
+import time
 
 
 def get_location():
     if(platform.system()=="Darwin"):
+        import objc
         import CoreLocation
         locationManager = CoreLocation.CLLocationManager.alloc().init()
         locationManager.startUpdatingLocation()
@@ -24,21 +24,31 @@ def get_location():
         else:
             print("Location data not available.")
             return None
-    else:
-        from geopy.geocoders import Nominatim
-        import time
+    elif(platform.system()=="Windows"):
+        wt = 5 # Wait time -- I purposefully make it wait before the shell command
+        accuracy = 3 #Starting desired accuracy is fine and builds at x1.5 per loop
 
-        geolocator = Nominatim(user_agent="geoapiExercises")
-        location = geolocator.geocode("")
-        # Wait for a moment to allow the location to be updated
-        time.sleep(2)
-        if location:
-            latitude = location.latitude
-            longitude = location.longitude
-            return (latitude, longitude)
-        else:
-            print("Location data not available.")
-            return None
+        pshellcomm = ['powershell']
+        pshellcomm.append('add-type -assemblyname system.device; '\
+                        '$loc = new-object system.device.location.geocoordinatewatcher;'\
+                        '$loc.start(); '\
+                        'while(($loc.status -ne "Ready") -and ($loc.permission -ne "Denied")) '\
+                        '{start-sleep -milliseconds 100}; '\
+                        '$acc = %d; '\
+                        'while($loc.position.location.horizontalaccuracy -gt $acc) '\
+                        '{start-sleep -milliseconds 100; $acc = [math]::Round($acc*1.5)}; '\
+                        '$loc.position.location.latitude; '\
+                        '$loc.position.location.longitude; '\
+                        '$loc.stop()' %(accuracy))
+
+        p = sp.Popen(pshellcomm, stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.STDOUT, text=True)
+        (out, err) = p.communicate()
+        out = re.split('\n', out)
+
+        lat = float(out[0])
+        long = float(out[1])
+
+    return (lat, long)
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     R = 6378.1  # Radius of the Earth in kilometers
@@ -56,16 +66,8 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     distance = R * c * 1000  # Convert distance to meters
     return distance
 
-if __name__ == "__main__":
-    # Get your current location
-    current_location = get_location()
-    if current_location:
-        # Coordinates of the destination
-        destination_latitude = 28.549051  # Example latitude
-        destination_longitude = 77.184498  # Example longitude
-        
-        # Calculate distance
-        distance = haversine_distance(current_location[0], current_location[1], destination_latitude, destination_longitude)
-        
-        print(f"Distance to destination: {distance} meters")
+def pixel_distance(x1, y1, x2, y2):
+    factor = 4.18820594354041  #could best fit?
+    dist = math.sqrt((x1-x2)**2 + (y1-y2)**2)
+    return dist * factor
 
