@@ -1,34 +1,13 @@
-#buttons translucent
-#rounded corners
-#heading white with black boundary and shadow
-#settings box gradient
-#pop up pannel electronic blue
-#border buttons
-
-#(300, 100) top left
-#(790, 100) top right
-#(300, 380) bottom left
-#(790, 380) bottom right
-#jwala circle (28.549072, 77.184548) (381, 157)
-#sac circle (28.546758, 77.185148) (419, 218)
-#himadri circle (28.544863, 77.194476)  (638, 171)
-#entrance (28.545861, 77.196540) (673, 120)
-# adch gate (28.539450, 77.198897) (789, 282)
-
 from classes import *
 from geolocate import *
 import random
-import math
 from enum import Enum
 import pygame
 import pygame_widgets
 from pygame_widgets.slider import Slider
 import sys
 import numpy as np
-
-multiply = np.array([[-10284.8089, 21505.0252], [-29304.1486, -10938.0468]])
-mul_inv = np.linalg.inv(multiply)
-add = np.array([[-1365852.2896, 1681011.2609]])
+import csv
 
 
 class State(Enum):
@@ -41,33 +20,10 @@ class State(Enum):
     GAME_HODOPHOBE = 7
     TOTAL_SCORE = 8
 
-class Image(Enum):
-    I0 = 0
-    I1 = 1
-    I2 = 2
-    I3 = 3
-    I4 = 4
-    I5 = 5
 
-
-
-STATE = State.MAIN_MENU
-IMAGE = Image.I0
-
-def nextState(state):
-    if state == Image.I0:
-        state = Image.I1
-    elif state == Image.I1:
-        state = Image.I2
-    elif state == Image.I2:
-        state = Image.I3
-    elif state == Image.I3:
-        state = Image.I4
-    elif state == Image.I4:
-        state = Image.I5
-    elif state == Image.I5:
-        state = Image.I0
-        STATE = State.TOTAL_SCORE
+STATE = State.GAME_HODOPHOBE
+IMAGE = 0
+ROUNDS_PER_GAME = 10
 
 pygame.init()
 pygame.mixer.init()
@@ -77,6 +33,9 @@ SCREEN_HEIGHT = 450
 newWidth = SCREEN_WIDTH
 newHeight = SCREEN_HEIGHT
 ratio = newHeight / SCREEN_HEIGHT
+RADIUS_OF_SCORE = 200
+DISTINCT_LOCS = 23
+TOTAL_SCORE = 0
 
 MAP_RATIO = 1.82
 
@@ -95,10 +54,14 @@ crossCursor = pygame.SYSTEM_CURSOR_CROSSHAIR
 icon = pygame.image.load("logo.png")
 pygame.display.set_icon(icon)
 
-locations = [
-    ("images/1.jpg", (28.548312, 77.185623)),
-    ("images/2.jpg", (604, 511)),
-]
+locations = []
+
+with open('images/pixel_coordinates.csv', 'r') as file:
+    reader = csv.reader(file)
+
+    # Read all lines into a list
+    locations = list(reader)
+
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("IITDGuessr")
@@ -125,6 +88,7 @@ information_page_1 = Page()
 information_page_2 = Page()
 hodophobe_page = Page()
 hodophile_page = Page()
+final_score_page = Page()
 
 cur_loc_list = []
 
@@ -377,9 +341,11 @@ while running:
 
         if not initialised_hodophobe:
 
-            #cur_loc_list = random.sample(locations, 5)
+            cur_loc_indexes = random.sample(range(23), 5)
 
-            image_loc, coordinates = locations[0][0], locations[0][1]
+            image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
+
+            coord_image = locations[cur_loc_indexes[0]]
 
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
@@ -387,19 +353,21 @@ while running:
             camp_map = Textures("campus_map.png", 300, 100, 490, 280)
             camp_map_rect = TextInBox("fonts/Quick Starter.ttf", "", 1, 300, 100, 490, 280, BLACK, WHITE, 0, transparent = True)
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
-            marker_texture = Textures("marker.png", -150, -150, 24, 38)
-            blue_marker_texture = Textures("blue_marker.png", -150, -150, 24, 38)
-            logo_texture = Textures("logo.png", 65, 260, 150, 138)
-            hodophobe_page.textureList = [camp_map, marker_texture, blue_marker_texture, logo_texture, image]
-            hodophobe_page.boxList = [image_container, camp_map_container]
-            hodophobe_page.buttonList = [submit_button, camp_map_rect]
-            score = 0
 
-            error_message_box = TextInBox("fonts/Quick Starter.ttf", "Please select a location", 10, newWidth//2 - 350, newHeight//2 - 30, 700, 60, GRAY, RED, 10)
+            marker_texture = Textures("marker.png", -150, -150, 12, 19)
+            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
+
+            logo_texture = Textures("logo.png", 65, 260, 150, 138)
+            score = 0
+            score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 465, 32, 150, 35, WHITE, RED, 5)
+            select_location_box = TextInBox("fonts/Quick Starter.ttf", "PLEASE PICK A LOCATION", 15, 300, 400, 490, 35, WHITE, RED, 5)
+
+            hodophobe_page.textureList = [camp_map, blue_marker_texture, marker_texture, logo_texture, image]
+            hodophobe_page.boxList = [image_container, camp_map_container, score_box, select_location_box]
+            hodophobe_page.buttonList = [submit_button, camp_map_rect]
 
             if ratio != 1:
                 hodophobe_page.resizePage(ratio)
-                error_message_box.update_dimensions(ratio)
             initialised_hodophobe = True
             continue
 
@@ -418,7 +386,6 @@ while running:
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 
                 hodophobe_page.resizePage(ratio)
-                error_message_box.update_dimensions(ratio)
 
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
@@ -439,47 +406,130 @@ while running:
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                if submit_button.rect.collidepoint(mouse_pos):
-                    if hodophobe_page.pos_marked == True:
-                        IMAGE = Image.I1
-                        hodophobe_page.pos_marked = False
-                    else:
-                        hodophobe_page.error = True
-                elif camp_map_rect.rect.collidepoint(mouse_pos):
-                    hodophobe_page.pos_marked = True
-                    x, y = mouse_pos
-                    marker_texture.X, marker_texture.Y = int(x//ratio)-12, int(y//ratio)-38
-                    marker_texture.update_dimensions(ratio)
+                if(IMAGE%2 == 0):
+                    if submit_button.rect.collidepoint(mouse_pos):
+                        if hodophobe_page.pos_marked == True:
+                            
+                            IMAGE = IMAGE + 1
 
+                            marker_texture.X, marker_texture.Y =  int(coord_image[0])-6, int(coord_image[1])-19
+                            marker_texture.update_dimensions(ratio)
+                            dis = round(pixel_distance(marker_texture.X, marker_texture.Y, blue_marker_texture.X, blue_marker_texture.Y))
+                            print("pixeldistance:", dis)
+                            additional_score = max(RADIUS_OF_SCORE - dis, 0)
+                            score = score + additional_score
+                            score_box.text_to_print = "Score:" + str(score)
+                            score_box.update_dimensions(ratio)
+                            select_location_box.text_to_print = "YOU SCORED " + str(additional_score) + " POINTS, BEING " + str(dis) + " M AWAY FROM TARGET"
+                            select_location_box.initial_font_size = 12
+                            select_location_box.update_dimensions(ratio)
+                            submit_button.text_to_print = "NEXT"
+                    
+                    elif camp_map_rect.rect.collidepoint(mouse_pos):
+
+                        hodophobe_page.pos_marked = True
+                        x, y = mouse_pos
+                        blue_marker_texture.X, blue_marker_texture.Y = round(x//ratio)-6, round(y//ratio)-19
+                        blue_marker_texture.update_dimensions(ratio)
+
+                else:
+                    if submit_button.rect.collidepoint(mouse_pos):
+                        IMAGE = IMAGE + 1
+
+                        if IMAGE == ROUNDS_PER_GAME:
+                            STATE = State.TOTAL_SCORE
+                            IMAGE = 0
+                            TOTAL_SCORE = score
+                            continue
+
+                        else:
+                            hodophobe_page.pos_marked = False
+                            blue_marker_texture.X = -150
+                            blue_marker_texture.Y = -150
+                            marker_texture.X = -150
+                            marker_texture.Y = -150
+                            select_location_box.text_to_print = "PLEASE SELECT A LOCATION"
+                            image_loc = "images/" + str(cur_loc_indexes[IMAGE//2]+1) + ".jpg"
+                            coord_image = locations[cur_loc_indexes[IMAGE//2]]
+                            image = Textures(image_loc, 55, 10, 180, 240)
+                            image.update_dimensions(ratio)
+                            hodophobe_page.textureList[4] = image
 
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
         hodophobe_page.renderBoxes(screen)
         hodophobe_page.renderTextures(screen)
         hodophobe_page.renderButtons(screen)
-
-        if (IMAGE == Image.I1 or IMAGE == Image.I3 or IMAGE == Image.I5):
-
-            if hodophobe_page.pos_marked == False:
-                coord_image = np.array(coordinates)
-                pixel_coord_image = multiply @ coord_image + add
-
-                pixel_coord_map = [marker_texture.X + 12, marker_texture.Y + 38]
-                blue_marker_texture.X, blue_marker_texture.Y =  pixel_coord_image[0][0]-12, pixel_coord_image[0][1]-38
-                blue_marker_texture.update_dimensions(ratio)
-                dis = round(pixel_distance(blue_marker_texture.X, blue_marker_texture.Y, marker_texture.X, marker_texture.Y))
-                print("pixeldistance:", dis)
-                score = score + 200 - dis
-                hodophobe_page.pos_marked = True
-            
-            blue_marker_texture.render(screen)
-            
-
-        if hodophobe_page.error == True:
-            error_message_box.render(screen)
-            pygame.time.wait(2000)
         
         if STATE != State.GAME_HODOPHOBE:
             initialised_hodophobe = False
+
+
+    if STATE == State.TOTAL_SCORE:
+
+        if not initialised_mode_select:
+
+            score_final_box = TextInBox("fonts/Quick Starter.ttf", "YOUR FINAL SCORE : " + str(TOTAL_SCORE), 40, x = 40, y = 40, w = 720, h = 300, box_color=WHITE, font_color=RED, roundedness=20, transparent=False)
+
+            main_menu_button_box = TextInBox("fonts/Quick Starter.ttf", "MAIN MENU", 22, x = 40, y = 370, w = 200, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
+            main_menu_button_bg = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 40, y = 375, w = 200, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
+
+            play_again_box = TextInBox("fonts/Quick Starter.ttf", "PLAY AGAIN", 22, x = 560, y = 370, w = 200, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
+            play_again_bg = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 560, y = 375, w = 200, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
+
+            final_score_page.buttonList = [main_menu_button_box, play_again_box]
+            final_score_page.boxList = [main_menu_button_bg, play_again_bg, score_final_box]
+
+            if ratio != 1:
+                final_score_page.resizePage(ratio)
+            initialised_mode_select = True
+            continue
+
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.VIDEORESIZE:
+                newWidth, newHeight = event.size
+                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
+                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
+                else:
+                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
+                
+                ratio = newWidth/SCREEN_WIDTH
+                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+
+                final_score_page.resizePage(ratio)
+
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = event.pos
+                for button in final_score_page.buttonList:
+                    if button.rect.collidepoint(mouse_pos):
+                        button.box_color = ORANGE
+                        
+                    else:
+                        button.box_color = RED
+                
+                final_score_page.resizePage(ratio)
+
+                if any(button.rect.collidepoint(mouse_pos) for button in final_score_page.buttonList):
+                    pygame.mouse.set_cursor(handCursor)
+                else:
+                    pygame.mouse.set_cursor(defaultCursor)
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if main_menu_button_box.rect.collidepoint(mouse_pos):
+                    STATE = State.MAIN_MENU
+                elif play_again_box.rect.collidepoint(mouse_pos):
+                    STATE = State.GAME_HODOPHOBE
+
+
+        screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
+        final_score_page.renderBoxes(screen)
+        final_score_page.renderButtons(screen)
+        
+        if STATE != State.TOTAL_SCORE:
+            initialised_mode_select = False
 
     pygame.display.flip()
 
