@@ -4,7 +4,6 @@
 # tracker to save kaunsi kaunsi location visit kari
 # versus mode
 # how to play
-# add quit in the middle of the game
 # find factor using best fit line
 # fill settings page
 
@@ -52,15 +51,13 @@ pygame.mixer.init()
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 450
-newWidth = SCREEN_WIDTH
-newHeight = SCREEN_HEIGHT
+newWidth = int(SCREEN_WIDTH * 1.8375)
+newHeight = int(SCREEN_HEIGHT * 1.8375)
 ratio = newHeight / SCREEN_HEIGHT
 
 RADIUS_OF_SCORE = 200
 DISTINCT_LOCS = 23
 TOTAL_SCORE = 0
-
-MAP_RATIO = 1.82
 
 WHITE = (240, 240, 240)
 GRAY = (227, 200, 200)
@@ -81,19 +78,15 @@ locations_pixel = []
 
 with open('images/pixel_coordinates.csv', 'r') as file:
     reader = csv.reader(file)
-
-    # Read all lines into a list
     locations_pixel = list(reader)
 
 locations_gps = []
 
 with open('images/geographical_coordinates.csv', 'r') as file:
     reader = csv.reader(file)
-
-    # Read all lines into a list
     locations_gps = list(reader)
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
+screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 pygame.display.set_caption("IITDGuessr")
 
 main_menu_bg = pygame.image.load("home_page.jpg").convert()
@@ -179,6 +172,7 @@ while running:
                     newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
                 ratio = newWidth/SCREEN_WIDTH
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+
 
                 menu_page.resizePage(ratio)
 
@@ -390,15 +384,19 @@ while running:
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 
             marker_texture = Textures("marker.png", -150, -150, 18, 29)
-            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19) #AHAHA
+            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
+
+            quit_to_box = TextInBox("fonts/ARIBL0.ttf", "Back To", 13, 660, 40, 100, 0, WHITE, RED, 5, True, BLACK)
+            main_menu_box = TextInBox("fonts/ARIBL0.ttf", "Main Menu", 13, 660, 55, 100, 0, WHITE, RED, 5, True, BLACK)
+            main_menu_button = TextInBox("fonts/ARIBL0.ttf", "", 13, 660, 32, 100, 33, WHITE, RED, 5)
 
             logo_texture = Textures("logo.png", 65, 260, 150, 138)
             score = 0
-            score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 465, 32, 150, 35, WHITE, RED, 5)
+            score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 325, 32, 150, 35, WHITE, RED, 5)
             select_location_box = TextInBox("fonts/Quick Starter.ttf", "PLEASE PICK A LOCATION", 15, 300, 400, 490, 35, WHITE, RED, 5)
 
             hodophobe_page.textureList = [camp_map, blue_marker_texture, marker_texture, logo_texture, image]
-            hodophobe_page.boxList = [image_container, camp_map_container, score_box, select_location_box]
+            hodophobe_page.boxList = [image_container, camp_map_container, score_box, select_location_box, main_menu_button, quit_to_box, main_menu_box]
             hodophobe_page.buttonList = [submit_button, camp_map_rect]
 
             if ratio != 1:
@@ -427,12 +425,17 @@ while running:
 
                 if submit_button.rect.collidepoint(mouse_pos):
                     submit_button.box_color = ORANGE
+                elif main_menu_button.rect.collidepoint(mouse_pos):
+                    main_menu_button.box_color = GRAY
                 else:
                     submit_button.box_color = RED
+                    main_menu_button.box_color = WHITE
                 
                 hodophobe_page.resizePage(ratio)
 
                 if submit_button.rect.collidepoint(mouse_pos):
+                    pygame.mouse.set_cursor(handCursor)
+                elif main_menu_button.rect.collidepoint(mouse_pos):
                     pygame.mouse.set_cursor(handCursor)
                 elif camp_map_rect.rect.collidepoint(mouse_pos):
                     pygame.mouse.set_cursor(crossCursor)
@@ -441,7 +444,11 @@ while running:
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                if(IMAGE%2 == 0):
+                if main_menu_button.rect.collidepoint(mouse_pos):
+                    STATE = State.MAIN_MENU
+                
+                elif(IMAGE%2 == 0):
+                    
                     if submit_button.rect.collidepoint(mouse_pos):
                         if hodophobe_page.pos_marked == True:
                             
@@ -522,13 +529,17 @@ while running:
             marker_texture = Textures("marker.png", -150, -150, 18, 29)
             blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
 
+            quit_to_box = TextInBox("fonts/ARIBL0.ttf", "Back To", 13, 660, 40, 100, 0, WHITE, RED, 5, True, BLACK)
+            main_menu_box = TextInBox("fonts/ARIBL0.ttf", "Main Menu", 13, 660, 55, 100, 0, WHITE, RED, 5, True, BLACK)
+            main_menu_button = TextInBox("fonts/ARIBL0.ttf", "", 13, 660, 32, 100, 33, WHITE, RED, 5)
+
             logo_texture = Textures("logo.png", 65, 260, 150, 138)
             score = 0
-            score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 465, 32, 150, 35, WHITE, RED, 5)
+            score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 325, 32, 150, 35, WHITE, RED, 5)
             select_location_box = TextInBox("fonts/Quick Starter.ttf", "PLEASE GO TO THE LOCATION", 15, 300, 400, 490, 35, WHITE, RED, 5)
 
             hodophile_page.textureList = [camp_map, blue_marker_texture, marker_texture, logo_texture, image]
-            hodophile_page.boxList = [image_container, camp_map_container, score_box, select_location_box]
+            hodophile_page.boxList = [image_container, camp_map_container, score_box, select_location_box, main_menu_button, quit_to_box, main_menu_box]
             hodophile_page.buttonList = [submit_button]
 
             if ratio != 1:
@@ -559,18 +570,25 @@ while running:
 
                 if submit_button.rect.collidepoint(mouse_pos):
                     submit_button.box_color = ORANGE
+                elif main_menu_button.rect.collidepoint(mouse_pos):
+                    main_menu_button.box_color = GRAY
                 else:
                     submit_button.box_color = RED
+                    main_menu_button.box_color = WHITE
                 
                 hodophile_page.resizePage(ratio)
 
                 if submit_button.rect.collidepoint(mouse_pos):
+                    pygame.mouse.set_cursor(handCursor)
+                elif main_menu_button.rect.collidepoint(mouse_pos):
                     pygame.mouse.set_cursor(handCursor)
                 else:
                     pygame.mouse.set_cursor(defaultCursor)
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
+                if main_menu_button.rect.collidepoint(mouse_pos):
+                    STATE = State.MAIN_MENU
                 if(IMAGE%2 == 0):
                     if submit_button.rect.collidepoint(mouse_pos):
                         dis = round(haversine_distance(location[0], location[1], float(locations_gps[cur_loc_indexes[IMAGE//2]][0]), float(locations_gps[cur_loc_indexes[IMAGE//2]][1])))
