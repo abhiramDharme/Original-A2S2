@@ -6,7 +6,6 @@
 # how to play
 # find factor using best fit line
 # fill settings page
-# RuntimeError: threads can only be started once
 
 
 from classes import *
@@ -35,6 +34,7 @@ class State(Enum):
     TOTAL_SCORE = 8
 
 
+prevSTATE = State.MAIN_MENU
 STATE = State.MAIN_MENU
 IMAGE = 0
 ROUNDS_PER_GAME = 10
@@ -50,7 +50,7 @@ def update_location():
     while thread_active:
         location = get_location()
 
-update_thread = threading.Thread(target = update_location)
+#update_thread = threading.Thread(target = update_location)
 
 pygame.init()
 pygame.mixer.init()
@@ -524,6 +524,7 @@ while running:
         hodophobe_page.renderButtons(screen)
         
         if STATE != State.GAME_HODOPHOBE:
+            prevSTATE = State.GAME_HODOPHOBE
             initialised_hodophobe = False
 
 
@@ -532,6 +533,7 @@ while running:
         if not initialised_hodophile:
 
             thread_active = True
+            update_thread = threading.Thread(target = update_location)
             update_thread.start()
 
             cur_loc_indexes = random.sample(range(23), ROUNDS_PER_GAME//2)
@@ -660,6 +662,7 @@ while running:
         hodophile_page.renderButtons(screen)
         
         if STATE != State.GAME_HODOPHILE:
+            prevSTATE = State.GAME_HODOPHILE
             initialised_hodophile = False
             thread_active = False
             update_thread.join()
@@ -722,7 +725,7 @@ while running:
                 if main_menu_button_box.rect.collidepoint(mouse_pos):
                     STATE = State.MAIN_MENU
                 elif play_again_box.rect.collidepoint(mouse_pos):
-                    STATE = State.GAME_HODOPHOBE
+                    STATE = prevSTATE
 
 
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
