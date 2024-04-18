@@ -6,6 +6,7 @@
 # how to play
 # find factor using best fit line
 # fill settings page
+# RuntimeError: threads can only be started once
 
 
 from classes import *
@@ -37,6 +38,11 @@ class State(Enum):
 STATE = State.MAIN_MENU
 IMAGE = 0
 ROUNDS_PER_GAME = 10
+
+def change_no_of_rounds(val):
+    global ROUNDS_PER_GAME
+    if val != None:
+        ROUNDS_PER_GAME = 2 * val
 
 def update_location():
     global location
@@ -191,25 +197,33 @@ while running:
             settings_container = TextInBox("fonts/Quick Starter.ttf", "", 1, -30, 0, SCREEN_WIDTH//2 + 30, SCREEN_HEIGHT, GRAY, GRAY, int(30), hover_color=GRAY)
             settings_box = TextInBox("fonts/Quick Starter.ttf", "SETTINGS", int(40), SCREEN_WIDTH//4, int(40), 0, 0, RED, RED, 0, True, RED)
             volume_box = TextInBox("fonts/Quick Starter.ttf", "MUSIC VOLUME", int(18), int(80), int(90), int(70), int(20), RED, RED, int(5), transparent= True, hover_color=RED)
+            no_of_rounds_box = TextInBox("fonts/Quick Starter.ttf", "NO OF ROUNDS", int(18), int(80), int(140), int(70), int(20), RED, RED, int(5), transparent= True, hover_color=RED)
+
 
             vol = pygame.mixer.music.get_volume()
 
             volume_slider = Slider(screen, int(230), int(95), int(140), int(5), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5), initial = int(vol * 100))
+            rounds_slider = Slider(screen, int(230), int(145), int(120), int(5), min = 1, max = 10, colour = RED, handleColour = BLACK, handleRadius = int(5), initial = int(ROUNDS_PER_GAME//2))
 
+            rounds_box = TextInBox("fonts/ARIBL0.ttf", str(rounds_slider.getValue()), 15, 360, 137, 20, 20, RED, WHITE, 5)
 
             iitdguessr_box = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(40), (SCREEN_WIDTH * 3) // 4 - int(90), int(70), int(160), int(40), BLACK, WHITE, int(5), transparent = True)
             iitdguessr_outline = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(41), (SCREEN_WIDTH * 3) // 4 - int(91), int(70), int(160), int(40), BLACK, BLACK, int(5), transparent = True)
             back_button = TextInBox("fonts/Quick Starter.ttf", "BACK", 25, 30, 410, 80, 25, BLACK, RED, 0, True)
-            settings_page.boxList = [settings_container, settings_box, volume_box, iitdguessr_outline, iitdguessr_box]
+            settings_page.boxList = [settings_container, settings_box, volume_box, no_of_rounds_box, rounds_box, iitdguessr_outline, iitdguessr_box]
             settings_page.buttonList = [back_button]
             if ratio != 1:
                 settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol)
+
+                rounds = rounds_slider.getValue()
+                rounds_slider = Slider(screen, int(230*ratio), int(145*ratio), int(120*ratio), int(5*ratio), min = 1, max = 10, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = rounds)
             initialised_settings = True
             continue
 
         events = pygame.event.get()
+        
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
@@ -226,6 +240,11 @@ while running:
                 settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol)
+
+                rounds = rounds_slider.getValue()
+                rounds_slider = Slider(screen, int(230*ratio), int(145*ratio), int(120*ratio), int(5*ratio), min = 1, max = 10, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = rounds)
+                
+
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
                 for button in settings_page.buttonList:
@@ -244,18 +263,19 @@ while running:
                 mouse_pos = event.pos
                 if back_button.text_rect.collidepoint(mouse_pos):
                     STATE = State.MAIN_MENU
-
             
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (newWidth//4, 0))
 
         settings_page.renderBoxes(screen)
         settings_page.renderButtons(screen)
         pygame_widgets.update(events)
-        volume = volume_slider.getValue()
-        pygame.mixer.music.set_volume(float(volume/100))
+        pygame.mixer.music.set_volume(float(volume_slider.getValue()/100))
+
+        rounds_box.text_to_print = str(rounds_slider.getValue())
 
         if STATE != State.SETTINGS:
             initialised_settings = False
+            change_no_of_rounds(rounds_slider.getValue())
 
 
     if STATE == State.MODE_SELECT:
@@ -370,7 +390,7 @@ while running:
 
         if not initialised_hodophobe:
 
-            cur_loc_indexes = random.sample(range(23), 5)
+            cur_loc_indexes = random.sample(range(23), ROUNDS_PER_GAME//2)
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
@@ -514,7 +534,7 @@ while running:
             thread_active = True
             update_thread.start()
 
-            cur_loc_indexes = random.sample(range(23), 5)
+            cur_loc_indexes = random.sample(range(23), ROUNDS_PER_GAME//2)
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
