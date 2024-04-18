@@ -1,14 +1,28 @@
+#emphatic response at <50
+#STORE NAME AND HIGH SCORE, leaderboard
+#changing id without movement
+# tracker to save kaunsi kaunsi location visit kari
+# add zooming in on map
+#check zanskar location
+#settings volume bug
+#versus mode
+# how to play
+
+
 from classes import *
 from geolocate import *
+from image_preprocess import *
 import random
 from enum import Enum
 import pygame
 import pygame_widgets
 from pygame_widgets.slider import Slider
 import sys
-import numpy as np
 import csv
+import threading
 
+location = (28.546758, 77.185148)
+thread_active = False
 
 class State(Enum):
     MAIN_MENU = 1
@@ -21,9 +35,17 @@ class State(Enum):
     TOTAL_SCORE = 8
 
 
-STATE = State.GAME_HODOPHOBE
+STATE = State.MAIN_MENU
 IMAGE = 0
 ROUNDS_PER_GAME = 10
+
+def update_location():
+    global location
+    global thread_active
+    while thread_active:
+        location = get_location()
+
+update_thread = threading.Thread(target = update_location)
 
 pygame.init()
 pygame.mixer.init()
@@ -33,6 +55,7 @@ SCREEN_HEIGHT = 450
 newWidth = SCREEN_WIDTH
 newHeight = SCREEN_HEIGHT
 ratio = newHeight / SCREEN_HEIGHT
+
 RADIUS_OF_SCORE = 200
 DISTINCT_LOCS = 23
 TOTAL_SCORE = 0
@@ -354,7 +377,7 @@ while running:
             camp_map_rect = TextInBox("fonts/Quick Starter.ttf", "", 1, 300, 100, 490, 280, BLACK, WHITE, 0, transparent = True)
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 
-            marker_texture = Textures("marker.png", -150, -150, 12, 19)
+            marker_texture = Textures("marker.png", -150, -150, 18, 29)
             blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
 
             logo_texture = Textures("logo.png", 65, 260, 150, 138)
@@ -412,10 +435,9 @@ while running:
                             
                             IMAGE = IMAGE + 1
 
-                            marker_texture.X, marker_texture.Y =  int(coord_image[0])-6, int(coord_image[1])-19
+                            marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-29
                             marker_texture.update_dimensions(ratio)
                             dis = round(pixel_distance(marker_texture.X, marker_texture.Y, blue_marker_texture.X, blue_marker_texture.Y))
-                            print("pixeldistance:", dis)
                             additional_score = max(RADIUS_OF_SCORE - dis, 0)
                             score = score + additional_score
                             score_box.text_to_print = "Score:" + str(score)
@@ -449,6 +471,7 @@ while running:
                             marker_texture.X = -150
                             marker_texture.Y = -150
                             select_location_box.text_to_print = "PLEASE SELECT A LOCATION"
+                            submit_button.text_to_print = "SUBMIT"
                             image_loc = "images/" + str(cur_loc_indexes[IMAGE//2]+1) + ".jpg"
                             coord_image = locations[cur_loc_indexes[IMAGE//2]]
                             image = Textures(image_loc, 55, 10, 180, 240)
@@ -462,6 +485,133 @@ while running:
         
         if STATE != State.GAME_HODOPHOBE:
             initialised_hodophobe = False
+
+
+    if STATE == State.GAME_HODOPHILE:
+
+        if not initialised_hodophile:
+
+            thread_active = True
+            update_thread.start()
+
+            cur_loc_indexes = random.sample(range(23), 5)
+
+            image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
+
+            coord_image = locations[cur_loc_indexes[0]]
+
+            image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
+            image = Textures(image_loc, 55, 10, 180, 240)
+            submit_button = TextInBox("fonts/arial.ttf", "FIX LOCATION", 15, 50, 410, 190, 25, RED, WHITE, 5)
+            camp_map = Textures("campus_map.png", 300, 100, 490, 280)
+            camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
+
+            marker_texture = Textures("marker.png", -150, -150, 18, 29)
+            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
+
+            logo_texture = Textures("logo.png", 65, 260, 150, 138)
+            score = 0
+            score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 465, 32, 150, 35, WHITE, RED, 5)
+            select_location_box = TextInBox("fonts/Quick Starter.ttf", "PLEASE GO TO THE LOCATION", 15, 300, 400, 490, 35, WHITE, RED, 5)
+
+            hodophile_page.textureList = [camp_map, blue_marker_texture, marker_texture, logo_texture, image]
+            hodophile_page.boxList = [image_container, camp_map_container, score_box, select_location_box]
+            hodophile_page.buttonList = [submit_button]
+
+            if ratio != 1:
+                hodophile_page.resizePage(ratio)
+            initialised_hodophile = True
+            continue
+
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                thread_active = False
+                update_thread.join()
+                running = False
+            elif event.type == pygame.VIDEORESIZE:
+                newWidth, newHeight = event.size
+                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
+                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
+                else:
+                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
+                
+                ratio = newWidth/SCREEN_WIDTH
+                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+
+                hodophile_page.resizePage(ratio)
+
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = event.pos
+
+                if submit_button.rect.collidepoint(mouse_pos):
+                    submit_button.box_color = ORANGE
+                else:
+                    submit_button.box_color = RED
+                
+                hodophile_page.resizePage(ratio)
+
+                if submit_button.rect.collidepoint(mouse_pos):
+                    pygame.mouse.set_cursor(handCursor)
+                else:
+                    pygame.mouse.set_cursor(defaultCursor)
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if(IMAGE%2 == 0):
+                    if submit_button.rect.collidepoint(mouse_pos):
+                            
+                        IMAGE = IMAGE + 1
+
+                        marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-29
+                        marker_texture.update_dimensions(ratio)
+                        dis = round(pixel_distance(marker_texture.X, marker_texture.Y, blue_marker_texture.X, blue_marker_texture.Y))
+                        additional_score = max(RADIUS_OF_SCORE - dis, 0)
+                        score = score + additional_score
+                        score_box.text_to_print = "Score:" + str(score)
+                        score_box.update_dimensions(ratio)
+                        select_location_box.text_to_print = "YOU SCORED " + str(additional_score) + " POINTS, BEING " + str(dis) + " M AWAY FROM TARGET"
+                        select_location_box.initial_font_size = 12
+                        select_location_box.update_dimensions(ratio)
+                        submit_button.text_to_print = "NEXT"
+                    
+
+                else:
+                    if submit_button.rect.collidepoint(mouse_pos):
+                        IMAGE = IMAGE + 1
+
+                        if IMAGE == ROUNDS_PER_GAME:
+                            STATE = State.TOTAL_SCORE
+                            IMAGE = 0
+                            TOTAL_SCORE = score
+                            continue
+
+                        else:
+                            hodophile_page.pos_marked = False
+                            blue_marker_texture.X = -150
+                            blue_marker_texture.Y = -150
+                            marker_texture.X = -150
+                            marker_texture.Y = -150
+                            select_location_box.text_to_print = "PLEASE GO TO THE LOCATION"
+                            submit_button.text_to_print = "FIX LOCATION"
+                            image_loc = "images/" + str(cur_loc_indexes[IMAGE//2]+1) + ".jpg"
+                            coord_image = locations[cur_loc_indexes[IMAGE//2]]
+                            image = Textures(image_loc, 55, 10, 180, 240)
+                            image.update_dimensions(ratio)
+                            hodophile_page.textureList[4] = image
+
+        pixel_coord = coord_to_pixel(location[0], location[1])
+        blue_marker_texture.X, blue_marker_texture.Y = pixel_coord
+
+        screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
+        hodophile_page.renderBoxes(screen)
+        hodophile_page.renderTextures(screen)
+        hodophile_page.renderButtons(screen)
+        
+        if STATE != State.GAME_HODOPHILE:
+            initialised_hodophile = False
+            thread_active = False
+            update_thread.join()
 
 
     if STATE == State.TOTAL_SCORE:

@@ -27,4 +27,3 @@ with open("images/geographical_coordinates.csv", 'r') as geographical_coordinate
             pixel_y = round(pixel_y)
             
             writer.writerow([pixel_x, pixel_y])
-

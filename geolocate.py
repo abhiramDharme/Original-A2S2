@@ -4,6 +4,10 @@ import math
 import subprocess as sp
 import re
 import time
+import numpy as np
+
+MULTIPLY = np.array([[-10284.8089, 21505.0252], [-29304.1486, -10938.0468]])
+ADD = np.array([[-1365852.2896, 1681011.2609]])
 
 
 def get_location():
@@ -71,3 +75,8 @@ def pixel_distance(x1, y1, x2, y2):
     dist = math.sqrt((x1-x2)**2 + (y1-y2)**2)
     return dist * factor
 
+def coord_to_pixel(x, y):
+    [[pixel_x, pixel_y]] = MULTIPLY @ np.array([x,y]) + ADD
+    pixel_x = round(pixel_x)
+    pixel_y = round(pixel_y)
+    return (pixel_x, pixel_y)
