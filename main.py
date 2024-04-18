@@ -77,14 +77,21 @@ crossCursor = pygame.SYSTEM_CURSOR_CROSSHAIR
 icon = pygame.image.load("logo.png")
 pygame.display.set_icon(icon)
 
-locations = []
+locations_pixel = []
 
 with open('images/pixel_coordinates.csv', 'r') as file:
     reader = csv.reader(file)
 
     # Read all lines into a list
-    locations = list(reader)
+    locations_pixel = list(reader)
 
+locations_gps = []
+
+with open('images/geographical_coordinates.csv', 'r') as file:
+    reader = csv.reader(file)
+
+    # Read all lines into a list
+    locations_gps = list(reader)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("IITDGuessr")
@@ -368,7 +375,7 @@ while running:
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
-            coord_image = locations[cur_loc_indexes[0]]
+            coord_image = locations_pixel[cur_loc_indexes[0]]
 
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
@@ -378,7 +385,7 @@ while running:
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 
             marker_texture = Textures("marker.png", -150, -150, 18, 29)
-            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
+            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19) #AHAHA
 
             logo_texture = Textures("logo.png", 65, 260, 150, 138)
             score = 0
@@ -435,9 +442,9 @@ while running:
                             
                             IMAGE = IMAGE + 1
 
-                            marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-29
+                            marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-27
                             marker_texture.update_dimensions(ratio)
-                            dis = round(pixel_distance(marker_texture.X, marker_texture.Y, blue_marker_texture.X, blue_marker_texture.Y))
+                            dis = round(pixel_distance(marker_texture.X+9, marker_texture.Y+27, blue_marker_texture.X + 6, blue_marker_texture.Y + 17))
                             additional_score = max(RADIUS_OF_SCORE - dis, 0)
                             score = score + additional_score
                             score_box.text_to_print = "Score:" + str(score)
@@ -451,8 +458,9 @@ while running:
 
                         hodophobe_page.pos_marked = True
                         x, y = mouse_pos
-                        blue_marker_texture.X, blue_marker_texture.Y = round(x//ratio)-6, round(y//ratio)-19
-                        blue_marker_texture.update_dimensions(ratio)
+                        blue_marker_texture.x = x - 6 * ratio
+                        blue_marker_texture.y = y - 17 * ratio
+                        blue_marker_texture.X, blue_marker_texture.Y = blue_marker_texture.x / ratio, blue_marker_texture.y / ratio
 
                 else:
                     if submit_button.rect.collidepoint(mouse_pos):
@@ -473,7 +481,7 @@ while running:
                             select_location_box.text_to_print = "PLEASE SELECT A LOCATION"
                             submit_button.text_to_print = "SUBMIT"
                             image_loc = "images/" + str(cur_loc_indexes[IMAGE//2]+1) + ".jpg"
-                            coord_image = locations[cur_loc_indexes[IMAGE//2]]
+                            coord_image = locations_pixel[cur_loc_indexes[IMAGE//2]]
                             image = Textures(image_loc, 55, 10, 180, 240)
                             image.update_dimensions(ratio)
                             hodophobe_page.textureList[4] = image
@@ -498,7 +506,7 @@ while running:
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
-            coord_image = locations[cur_loc_indexes[0]]
+            coord_image = locations_pixel[cur_loc_indexes[0]]
 
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
@@ -560,12 +568,12 @@ while running:
                 mouse_pos = event.pos
                 if(IMAGE%2 == 0):
                     if submit_button.rect.collidepoint(mouse_pos):
-                            
+                        dis = round(haversine_distance(location[0], location[1], float(locations_gps[cur_loc_indexes[IMAGE//2]][0]), float(locations_gps[cur_loc_indexes[IMAGE//2]][1])))
+                        
                         IMAGE = IMAGE + 1
 
-                        marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-29
+                        marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-27
                         marker_texture.update_dimensions(ratio)
-                        dis = round(pixel_distance(marker_texture.X, marker_texture.Y, blue_marker_texture.X, blue_marker_texture.Y))
                         additional_score = max(RADIUS_OF_SCORE - dis, 0)
                         score = score + additional_score
                         score_box.text_to_print = "Score:" + str(score)
@@ -595,13 +603,13 @@ while running:
                             select_location_box.text_to_print = "PLEASE GO TO THE LOCATION"
                             submit_button.text_to_print = "FIX LOCATION"
                             image_loc = "images/" + str(cur_loc_indexes[IMAGE//2]+1) + ".jpg"
-                            coord_image = locations[cur_loc_indexes[IMAGE//2]]
+                            coord_image = locations_pixel[cur_loc_indexes[IMAGE//2]]
                             image = Textures(image_loc, 55, 10, 180, 240)
                             image.update_dimensions(ratio)
                             hodophile_page.textureList[4] = image
 
         pixel_coord = coord_to_pixel(location[0], location[1])
-        blue_marker_texture.X, blue_marker_texture.Y = pixel_coord
+        blue_marker_texture.X, blue_marker_texture.Y = pixel_coord[0]-6, pixel_coord[1]-17
 
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
         hodophile_page.renderBoxes(screen)

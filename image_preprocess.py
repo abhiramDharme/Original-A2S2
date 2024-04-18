@@ -12,8 +12,8 @@
 import csv
 import numpy as np
 
-MULTIPLY = np.array([[-10284.8089, 21505.0252], [-29304.1486, -10938.0468]])
-ADD = np.array([[-1365852.2896, 1681011.2609]])
+MULTIPLY = np.array([[-10349.3216, 21401.1892], [-28356.9694, -10614.5441]])
+ADD = np.array([[-1355995.58, 1629000.4379]])
 
 with open("images/geographical_coordinates.csv", 'r') as geographical_coordinates:
     reader = csv.reader(geographical_coordinates)
