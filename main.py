@@ -1,12 +1,12 @@
-#emphatic response at <50
-#STORE NAME AND HIGH SCORE, leaderboard
-#changing id without movement
+# emphatic response at <50
+# STORE NAME AND HIGH SCORE, leaderboard
+# changing submit button without movement
 # tracker to save kaunsi kaunsi location visit kari
-# add zooming in on map
-#check zanskar location
-#settings volume bug
-#versus mode
+# versus mode
 # how to play
+# add quit in the middle of the game
+# find factor using best fit line
+# fill settings page
 
 
 from classes import *
@@ -197,7 +197,12 @@ while running:
             settings_container = TextInBox("fonts/Quick Starter.ttf", "", 1, -30, 0, SCREEN_WIDTH//2 + 30, SCREEN_HEIGHT, GRAY, GRAY, int(30), hover_color=GRAY)
             settings_box = TextInBox("fonts/Quick Starter.ttf", "SETTINGS", int(40), SCREEN_WIDTH//4, int(40), 0, 0, RED, RED, 0, True, RED)
             volume_box = TextInBox("fonts/Quick Starter.ttf", "MUSIC VOLUME", int(18), int(80), int(90), int(70), int(20), RED, RED, int(5), transparent= True, hover_color=RED)
-            volume_slider = Slider(screen, int(230), int(95), int(140), int(5), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5), initial = 100)
+
+            vol = pygame.mixer.music.get_volume()
+
+            volume_slider = Slider(screen, int(230), int(95), int(140), int(5), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5), initial = int(vol * 100))
+
+
             iitdguessr_box = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(40), (SCREEN_WIDTH * 3) // 4 - int(90), int(70), int(160), int(40), BLACK, WHITE, int(5), transparent = True)
             iitdguessr_outline = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(41), (SCREEN_WIDTH * 3) // 4 - int(91), int(70), int(160), int(40), BLACK, BLACK, int(5), transparent = True)
             back_button = TextInBox("fonts/Quick Starter.ttf", "BACK", 25, 30, 410, 80, 25, BLACK, RED, 0, True)
@@ -226,7 +231,7 @@ while running:
 
                 settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
-                volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = WHITE, handleColour = BLACK, handleRadius = int(10*ratio), initial = vol)
+                volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol)
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
                 for button in settings_page.buttonList:
@@ -510,7 +515,7 @@ while running:
 
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
-            submit_button = TextInBox("fonts/arial.ttf", "FIX LOCATION", 15, 50, 410, 190, 25, RED, WHITE, 5)
+            submit_button = TextInBox("fonts/arial.ttf", "FIX MY LOCATION", 15, 50, 410, 190, 25, RED, WHITE, 5)
             camp_map = Textures("campus_map.png", 300, 100, 490, 280)
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 

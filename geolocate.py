@@ -29,7 +29,7 @@ def get_location():
             print("Location data not available.")
             return None
     elif(platform.system()=="Windows"):
-        wt = 5 # Wait time -- I purposefully make it wait before the shell command
+        wt = 2 # Wait time -- I purposefully make it wait before the shell command
         accuracy = 3 #Starting desired accuracy is fine and builds at x1.5 per loop
 
         pshellcomm = ['powershell']
