@@ -30,6 +30,7 @@ import sys
 import csv
 import threading
 import pandas as pd
+import ast
 
 
 class State(Enum):
@@ -384,7 +385,7 @@ while running:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if hodophilic_box.rect.collidepoint(mouse_pos):
-                    STATE = State.GAME_HODOPHILE
+                    STATE = State.LOAD_SELECT
                 elif hodophobic_box.rect.collidepoint(mouse_pos):
                     STATE = State.HODO_SELECT
                 elif back_box.rect.collidepoint(mouse_pos):
@@ -815,9 +816,17 @@ while running:
 
             cur_loc_indexes = random.sample(range(DISTINCT_LOCS), ROUNDS_PER_GAME//2)
 
-            image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
-            coord_image = locations_pixel[cur_loc_indexes[0]]
+            if prevSTATE == State.LOAD_SELECT:
+                with open("game_data/saved_state.csv", "r") as file:
+                    reader = csv.reader(file)
+                    line = list(reader)
+                    IMAGE = int(line[0][0])
+                    cur_loc_indexes = ast.literal_eval(line[1][0])
+
+            coord_image = locations_pixel[cur_loc_indexes[IMAGE//2]]
+
+            image_loc = "images/" + str(cur_loc_indexes[IMAGE//2]+1) + ".jpg"
 
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
@@ -852,6 +861,13 @@ while running:
                 thread_active = False
                 update_thread.join()
                 running = False
+
+                with open("game_data/saved_state.csv", "w", newline = '') as file:
+                    writer = csv.writer(file)
+
+                    writer.writerow([IMAGE])
+                    writer.writerow([cur_loc_indexes])
+
             elif event.type == pygame.VIDEORESIZE:
                 newWidth, newHeight = event.size
                 if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
@@ -888,6 +904,12 @@ while running:
                 mouse_pos = event.pos
                 if main_menu_button.rect.collidepoint(mouse_pos):
                     STATE = State.MAIN_MENU
+                    with open("game_data/saved_state.csv", "w", newline = '') as file:
+                        writer = csv.writer(file)
+
+                        writer.writerow([IMAGE])
+                        writer.writerow([cur_loc_indexes])
+
                 if(IMAGE%2 == 0):
                     if submit_button.rect.collidepoint(mouse_pos):
                         dis = round(haversine_distance(location[0], location[1], float(locations_gps[cur_loc_indexes[IMAGE//2]][0]), float(locations_gps[cur_loc_indexes[IMAGE//2]][1])))
@@ -944,6 +966,7 @@ while running:
         hodophile_page.renderButtons(screen)
         
         if STATE != State.GAME_HODOPHILE:
+
             prevSTATE = State.GAME_HODOPHILE
             IMAGE = 0
             initialised_hodophile = False
@@ -985,7 +1008,7 @@ while running:
                     else:
                         button.box_color = RED
                 
-                hodo_select_page.resizePage(ratio)
+                load_select_page.resizePage(ratio)
 
                 if any(button.rect.collidepoint(mouse_pos) for button in load_select_page.buttonList):
                     pygame.mouse.set_cursor(handCursor)
@@ -996,10 +1019,9 @@ while running:
                 mouse_pos = event.pos
                 if load_box.rect.collidepoint(mouse_pos):
                     STATE = State.GAME_HODOPHILE
-                    #with open("saved_state.txt") 33333
+                    prevSTATE = State.LOAD_SELECT
 
-
-                elif versus_box.rect.collidepoint(mouse_pos):
+                elif new_box.rect.collidepoint(mouse_pos):
                     STATE = State.GAME_HODOPHILE
                 elif back_box_load.rect.collidepoint(mouse_pos):
                     STATE = State.MODE_SELECT
@@ -1241,6 +1263,7 @@ with open("game_data/settings_state.csv", "w", newline = '') as file:
     writer = csv.writer(file)
 
     writer.writerow([pygame.mixer.music.get_volume(), ROUNDS_PER_GAME])
+
 
 pygame.quit()
 sys.exit()
