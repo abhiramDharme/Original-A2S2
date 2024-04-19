@@ -1,0 +1,53 @@
+IITD-Guessr:
+
+Motivation and Social Cause for the IITD-Guesser Game:
+
+The motivation behind creating a university 
+campus-specific geo-guesser game is rooted in 
+understanding the unique challenges faced by 
+introverted students in a highly competitive 
+academic environment. Introverts often find 
+social interaction and adaptation to large, 
+bustling environments daunting. This game is 
+crafted to encourage a sense of familiarity 
+and comfort with the campus in a fun, low-pressure 
+manner. By turning campus exploration into a game, 
+we aim to help introverted students feel more at 
+home in their university environment, facilitating 
+easier integration into campus life and reducing 
+feelings of isolation.
+
+Multiplayer Feature:
+To further enhance its impact, the game includes 
+a multiplayer mode designed to foster interaction 
+among students in a controlled and supportive setting. 
+This feature enables introverted students to have 
+interaction with peers through shared tasks within the 
+game, providing a platform for interaction that respects 
+their need for more manageable social engagement. 
+It's a strategic way to encourage communication and 
+build friendships without the stress of face-to-face 
+encounters, making it an ideal medium for introverts 
+to begin forming connections.
+
+Social Cause:
+Aligned with the cause of mental health awareness 
+and support, this game addresses the critical issues 
+of depression and anxiety prevalent among university 
+students. The high-pressure academic atmosphere can 
+significantly affect students' mental health, 
+sometimes leading to severe consequences like 
+depression or even suicide. This game serves as a 
+preventive tool, aiming to mitigate these risks by 
+promoting a familiar and interactive campus environment.
+
+Choice of Topic:
+The focus on mental health was chosen due to the 
+alarming rates of mental health issues such as 
+depression and anxiety observed on campus. Familiarity 
+with one's environment can significantly impact one's 
+sense of security and stress levels. For students who 
+find personal interactions challenging, this virtual 
+exploration tool can act as a precursor to physical 
+exploration, boosting their confidence and feelings 
+of belonging.

@@ -1,50 +1,41 @@
 # emphatic response at <50
-# STORE NAME AND HIGH SCORE, leaderboard
 # changing submit button without movement
-# tracker to save kaunsi kaunsi location visit kari
 # how to play
 # find factor using best fit line
 # fill settings page
 # easy and difficult
+# add line between marked locations
+# add menu sounds
 
 
 from classes import *
 from geolocate import *
 from image_preprocess import *
+
+from colours import *
+from constants import *
+
+
+from main_menu import *
+from settings import *
+from leaderboard import *
+from mode_select import *
+from crawl import *
+
+
 import random
 from enum import Enum
 import pygame
 import pygame_widgets
 from pygame_widgets.slider import Slider
+from pygame_widgets.textbox import TextBox
 import sys
 import csv
 import threading
+import pandas as pd
 
 location = (28.546758, 77.185148)
 thread_active = False
-
-class State(Enum):
-    MAIN_MENU = 1
-    GAME_HODOPHILE = 2
-    GAME_HODOPHOBE_VERSUS = 3
-    MOTIVATION = 4
-    SETTINGS = 5
-    MODE_SELECT = 6
-    GAME_HODOPHOBE = 7
-    TOTAL_SCORE = 8
-    HODO_SELECT = 9
-    TOTAL_SCORE_VERSUS = 10
-
-
-prevSTATE = State.MAIN_MENU
-STATE = State.MAIN_MENU
-IMAGE = 0
-ROUNDS_PER_GAME = 10
-
-def change_no_of_rounds(val):
-    global ROUNDS_PER_GAME
-    if val != None:
-        ROUNDS_PER_GAME = 2 * val
 
 def update_location():
     global location
@@ -52,30 +43,41 @@ def update_location():
     while thread_active:
         location = get_location()
 
-#update_thread = threading.Thread(target = update_location)
+class State(Enum):
+    MAIN_MENU = 1
+    GAME_HODOPHILE = 2
+    GAME_HODOPHOBE_VERSUS = 3
+    MOTIVATION_CRAWL = 4
+    SETTINGS = 5
+    MODE_SELECT = 6
+    GAME_HODOPHOBE = 7
+    TOTAL_SCORE = 8
+    HODO_SELECT = 9
+    TOTAL_SCORE_VERSUS = 10
+    LEADERBOARD = 11
 
-pygame.init()
+
+prevSTATE = State.MAIN_MENU
+STATE = State.MAIN_MENU
+IMAGE = 0
+
+
+def change_no_of_rounds(val):
+    global ROUNDS_PER_GAME
+    if val != None:
+        ROUNDS_PER_GAME = 2 * val
+
+
 pygame.mixer.init()
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 450
+
 newWidth = int(SCREEN_WIDTH * 1.8375)
 newHeight = int(SCREEN_HEIGHT * 1.8375)
 ratio = newHeight / SCREEN_HEIGHT
 
-RADIUS_OF_SCORE = 200
-DISTINCT_LOCS = 23
 TOTAL_SCORE = 0
 TOTAL_SCORE_1 = 0
 TOTAL_SCORE_2 = 0
-
-WHITE = (240, 240, 240)
-GRAY = (227, 200, 200)
-RED = (181, 40, 40)
-ORANGE = (255, 85, 28)
-CYAN = (25, 41, 11)
-BLACK = (0, 0, 0)
-DARK_RED = (97, 15, 15)
 
 defaultCursor = pygame.SYSTEM_CURSOR_ARROW
 handCursor = pygame.SYSTEM_CURSOR_HAND
@@ -103,24 +105,34 @@ main_menu_bg = pygame.image.load("home_page.jpg").convert()
 
 pygame.mixer.music.load('bgm.mp3')
 pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.50)
+
+def video_resize(event, page):
+    global newWidth
+    global newHeight
+    global ratio
+    global screen
+
+    newWidth, newHeight = event.size
+    if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
+        newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
+    else:
+        newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
+    ratio = newWidth/SCREEN_WIDTH
+    screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+
+
+    page.resizePage(ratio)
 
 running = True
-initialised_main_menu = False
-initialised_settings = False
-initialised_mode_select = False
+
 initialised_hodophobe = False
 initialised_hodophobe_versus = False
 initialised_hodophile = False
 initialised_hodoselect = False
 
-show_information_box_1 = False
-show_information_box_2 = False
 
-menu_page = Page()
-settings_page = Page()
-mode_select_page = Page()
-information_page_1 = Page()
-information_page_2 = Page()
+
 hodophobe_page = Page()
 hodophobe_versus_page = Page()
 hodophile_page = Page()
@@ -133,19 +145,11 @@ while running:
     if STATE == State.MAIN_MENU:
 
         if not initialised_main_menu:
-            play_button = TextInBox("fonts/Quick Starter.ttf", "PLAY GAME", 20, SCREEN_WIDTH // 2 - 90, SCREEN_HEIGHT // 2 - 10, 180, 35, RED, WHITE, 5)
-            settings_button = TextInBox("fonts/Quick Starter.ttf", "SETTINGS", 20, SCREEN_WIDTH // 2 - 90, SCREEN_HEIGHT // 2 + 35, 180, 35, RED, WHITE, 5)
-            motivation_button = TextInBox("fonts/Quick Starter.ttf", "MOTIVATION", 20, SCREEN_WIDTH // 2 - 90, SCREEN_HEIGHT // 2 + 80, 180, 35, RED, WHITE, 5)
-            quit_button = TextInBox("fonts/Quick Starter.ttf", "QUIT GAME", 20, SCREEN_WIDTH // 2 - 90, SCREEN_HEIGHT // 2 + 125, 180, 35, RED, WHITE, 5)
-            createdby_box = TextInBox("fonts/ARIBL0.ttf", "Created by", 13, 750, 420, 0, 0, BLACK, WHITE, 0, True, BLACK)
-            s_and_a_box = TextInBox("fonts/ARIBL0.ttf", "SK and ASD", 13, 750, 440, 0, 0, BLACK, WHITE, 0, True, BLACK)
-            iitd_guessr = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", 70, SCREEN_WIDTH // 2 - 90, 70, 160, 40, BLACK, WHITE, 5, transparent = True)
-            iitd_guessr_outline = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", 71, SCREEN_WIDTH // 2 - 91, 70, 160, 40, BLACK, BLACK, 5, transparent = True)
-            menu_page.buttonList = [play_button, settings_button, motivation_button, quit_button]
-            menu_page.boxList = [createdby_box, s_and_a_box, iitd_guessr_outline, iitd_guessr]
 
-            if ratio != 1:
-                menu_page.resizePage(ratio)
+            menu_page.resizePage(ratio)
+
+            for button in menu_page.buttonList:
+                button.box_color = RED
 
             initialised_main_menu = True
             continue
@@ -171,25 +175,19 @@ while running:
                 mouse_pos = event.pos
                 if play_button.rect.collidepoint(mouse_pos):
                     STATE = State.MODE_SELECT
-                elif motivation_button.rect.collidepoint(mouse_pos):
-                    STATE = State.MOTIVATION
                 elif settings_button.rect.collidepoint(mouse_pos):
                     STATE = State.SETTINGS
+                elif leaderboard_button.rect.collidepoint(mouse_pos):
+                    STATE = State.LEADERBOARD
+                elif motivation_button.rect.collidepoint(mouse_pos):
+                    STATE = State.MOTIVATION_CRAWL
+                
                 elif quit_button.rect.collidepoint(mouse_pos):
                     running = False
                     continue
 
             elif event.type == pygame.VIDEORESIZE:
-                newWidth, newHeight = event.size
-                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
-                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
-                else:
-                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
-                ratio = newWidth/SCREEN_WIDTH
-                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
-
-
-                menu_page.resizePage(ratio)
+                video_resize(event, menu_page)
 
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
         menu_page.renderBoxes(screen)
@@ -200,34 +198,64 @@ while running:
             initialised_main_menu = False
 
 
+    if STATE == State.LEADERBOARD:
+        if not initialised_leaderboard:
+
+            leaderboard_page.resizePage(ratio)
+
+            initialised_leaderboard = True
+            continue
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = event.pos
+                for button in leaderboard_page.buttonList:
+                    if button.rect.collidepoint(mouse_pos):
+                        button.box_color = ORANGE
+                    else:
+                        button.box_color = RED
+                
+                back_button.update_dimensions(ratio)
+
+                if any(button.rect.collidepoint(mouse_pos) for button in leaderboard_page.buttonList):
+                    pygame.mouse.set_cursor(handCursor)
+                else:
+                    pygame.mouse.set_cursor(defaultCursor)
+
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if back_button.rect.collidepoint(mouse_pos):
+                    STATE = State.MAIN_MENU
+
+            elif event.type == pygame.VIDEORESIZE:
+                video_resize(event, leaderboard_page)
+
+        screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
+        leaderboard_page.renderBoxes(screen)
+        leaderboard_page.renderButtons(screen)
+
+
+        if STATE != State.LEADERBOARD:
+            initialised_leaderboard = False
+
+
     if STATE == State.SETTINGS:
         if not initialised_settings:
-            pygame.mouse.set_cursor(defaultCursor)
-            settings_container = TextInBox("fonts/Quick Starter.ttf", "", 1, -30, 0, SCREEN_WIDTH//2 + 30, SCREEN_HEIGHT, GRAY, GRAY, int(30), hover_color=GRAY)
-            settings_box = TextInBox("fonts/Quick Starter.ttf", "SETTINGS", int(40), SCREEN_WIDTH//4, int(40), 0, 0, RED, RED, 0, True, RED)
-            volume_box = TextInBox("fonts/Quick Starter.ttf", "MUSIC VOLUME", int(18), int(80), int(90), int(70), int(20), RED, RED, int(5), transparent= True, hover_color=RED)
-            no_of_rounds_box = TextInBox("fonts/Quick Starter.ttf", "NO OF ROUNDS", int(18), int(80), int(140), int(70), int(20), RED, RED, int(5), transparent= True, hover_color=RED)
-
-
+            
             vol = pygame.mixer.music.get_volume()
+            volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol*100)
 
-            volume_slider = Slider(screen, int(230), int(95), int(140), int(5), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5), initial = int(vol * 100))
-            rounds_slider = Slider(screen, int(230), int(145), int(120), int(5), min = 1, max = 10, colour = RED, handleColour = BLACK, handleRadius = int(5), initial = int(ROUNDS_PER_GAME//2))
+            for button in settings_page.buttonList:
+                button.font_color = RED
 
-            rounds_box = TextInBox("fonts/ARIBL0.ttf", str(rounds_slider.getValue()), 15, 360, 137, 20, 20, RED, WHITE, 5)
-
-            iitdguessr_box = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(40), (SCREEN_WIDTH * 3) // 4 - int(90), int(70), int(160), int(40), BLACK, WHITE, int(5), transparent = True)
-            iitdguessr_outline = TextInBox("fonts/Quick Starter.ttf", "IITDGUESSR", int(41), (SCREEN_WIDTH * 3) // 4 - int(91), int(70), int(160), int(40), BLACK, BLACK, int(5), transparent = True)
-            back_button = TextInBox("fonts/Quick Starter.ttf", "BACK", 25, 30, 410, 80, 25, BLACK, RED, 0, True)
-            settings_page.boxList = [settings_container, settings_box, volume_box, no_of_rounds_box, rounds_box, iitdguessr_outline, iitdguessr_box]
-            settings_page.buttonList = [back_button]
-            if ratio != 1:
-                settings_page.resizePage(ratio)
-                vol = volume_slider.getValue()
-                volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol)
-
-                rounds = rounds_slider.getValue()
-                rounds_slider = Slider(screen, int(230*ratio), int(145*ratio), int(120*ratio), int(5*ratio), min = 1, max = 10, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = rounds)
+            rounds = ROUNDS_PER_GAME//2
+            rounds_slider = Slider(screen, int(230*ratio), int(145*ratio), int(120*ratio), int(5*ratio), min = 1, max = 10, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = rounds)
+            rounds_box = TextInBox("fonts/ARIBL0.ttf", str(rounds_slider.getValue()), int(15), int(360), int(137), int(20), int(20), RED, WHITE, int(5))
+            settings_page.boxList.append(rounds_box)
+            settings_page.resizePage(ratio)
             initialised_settings = True
             continue
 
@@ -237,16 +265,8 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.VIDEORESIZE:
-                newWidth, newHeight = event.size
-                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
-                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
-                else:
-                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
-                
-                ratio = newWidth/SCREEN_WIDTH
-                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+                video_resize(event, settings_page)
 
-                settings_page.resizePage(ratio)
                 vol = volume_slider.getValue()
                 volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol)
 
@@ -261,16 +281,17 @@ while running:
                         button.font_color = ORANGE
                     else:
                         button.font_color = RED
-                settings_page.resizePage(ratio)
+                
 
                 if any(button.text_rect.collidepoint(mouse_pos) for button in settings_page.buttonList):
                     pygame.mouse.set_cursor(handCursor)
                 else:
                     pygame.mouse.set_cursor(defaultCursor)
+                settings_page.resizePage(ratio)
                 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                if back_button.text_rect.collidepoint(mouse_pos):
+                if any(button.text_rect.collidepoint(mouse_pos) for button in settings_page.buttonList):
                     STATE = State.MAIN_MENU
             
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (newWidth//4, 0))
@@ -291,37 +312,12 @@ while running:
 
         if not initialised_mode_select:
 
-            hodophilic_box = TextInBox("fonts/Quick Starter.ttf", "HODOPHILIC", 45, x = SCREEN_WIDTH//2-360, y = 260, w = 385, h = 70, box_color=RED, font_color=WHITE, roundedness=20, transparent=False)
-            hodophilic_bg = TextInBox("fonts/Quick Starter.ttf", "", 45, x = SCREEN_WIDTH//2-360, y = 265, w = 385, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=20, transparent=False)
-            hodophobic_box = TextInBox("fonts/Quick Starter.ttf", "HODOPHOBIC", 45, x = SCREEN_WIDTH//2-50, y = 350, w = 410, h = 70, box_color=RED, font_color=WHITE, roundedness=20, transparent=False)
-            hodophobic_bg = TextInBox("fonts/Quick Starter.ttf", "", 45, x = SCREEN_WIDTH//2-50, y = 355, w = 410, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=20, transparent=False)
-            choose_your_box = TextInBox("fonts/Quick Starter.ttf", "CHOOSE YOUR", 50, x = 340, y = 5, w = 410, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=0, transparent=True)
-            game_mode_box = TextInBox("fonts/Quick Starter.ttf", "GAME MODE", 50, x = 372, y = 50, w = 410, h = 70, box_color=DARK_RED, font_color=WHITE, roundedness=0, transparent=True)
-            choose_your_bg = TextInBox("fonts/Quick Starter.ttf", "CHOOSE YOUR", 51, x = 339, y = 5, w = 410, h = 70, box_color=DARK_RED, font_color=BLACK, roundedness=0, transparent=True)
-            game_mode_bg =  TextInBox("fonts/Quick Starter.ttf", "GAME MODE", 51, x = 371, y = 50, w = 410, h = 70, box_color=DARK_RED, font_color=BLACK, roundedness=0, transparent=True)
+            for button in mode_select_page.buttonList:
+                button.box_color = RED
 
-            back_box = TextInBox("fonts/Quick Starter.ttf", "BACK", 22, x = 40, y = 20, w = 90, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
-            back_bg = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 40, y = 25, w = 90, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
-
-            mode_select_page.buttonList = [hodophilic_box, hodophobic_box, back_box]
-            mode_select_page.boxList = [hodophilic_bg, hodophobic_bg, choose_your_bg, game_mode_bg, choose_your_box, game_mode_box, back_bg]
-            
-            information_box_1 = TextInBox("fonts/Quick Starter.ttf", "", 50, x = 10, y = 10, w = 280, h = 140, box_color=GRAY, font_color=CYAN, roundedness=10, transparent=False)
-            philic_line_1 = TextInBox("fonts/Quick Starter.ttf", "TRAVEL AROUND CAMPUS", 15, x = 10, y = 50, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
-            philic_line_2 = TextInBox("fonts/Quick Starter.ttf", "AND DISCOVER NEW", 15, x = 10, y = 80, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
-            philic_line_3 = TextInBox("fonts/Quick Starter.ttf", "SPOTS AND LOCATIONS!", 15, x = 10, y = 110, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
-            information_page_1.boxList = [information_box_1, philic_line_1, philic_line_2, philic_line_3]
-
-            information_box_2 = TextInBox("fonts/Quick Starter.ttf", "", 50, x = 10, y = 10, w = 280, h = 140, box_color=GRAY, font_color=CYAN, roundedness=10, transparent=False)
-            phobic_line_1 = TextInBox("fonts/Quick Starter.ttf", "FIND OUT SECRET", 15, x = 10, y = 50, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
-            phobic_line_2 = TextInBox("fonts/Quick Starter.ttf", "CORNERS WITHOUT", 15, x = 10, y = 80, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
-            phobic_line_3 = TextInBox("fonts/Quick Starter.ttf", "MOVING FROM YOUR BED!", 15, x = 10, y = 110, w = 280, h = 0, box_color=RED, font_color=RED, roundedness=20, transparent=True)
-            information_page_2.boxList = [information_box_2, phobic_line_1, phobic_line_2, phobic_line_3]
-
-            if ratio != 1:
-                mode_select_page.resizePage(ratio)
-                information_page_1.resizePage(ratio)
-                information_page_2.resizePage(ratio)
+            mode_select_page.resizePage(ratio)
+            information_page_1.resizePage(ratio)
+            information_page_2.resizePage(ratio)
             initialised_mode_select = True
             continue
 
@@ -330,16 +326,7 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.VIDEORESIZE:
-                newWidth, newHeight = event.size
-                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
-                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
-                else:
-                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
-                
-                ratio = newWidth/SCREEN_WIDTH
-                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
-
-                mode_select_page.resizePage(ratio)
+                video_resize(event, mode_select_page)
                 information_page_1.resizePage(ratio)
                 information_page_2.resizePage(ratio)
 
@@ -461,7 +448,7 @@ while running:
 
         
         if STATE != State.HODO_SELECT:
-            initialised_mode_select = False
+            initialised_hodoselect = False
         
 
     if STATE == State.GAME_HODOPHOBE:
@@ -939,7 +926,9 @@ while running:
 
         if not initialised_mode_select:
 
-            score_final_box = TextInBox("fonts/Quick Starter.ttf", "YOUR FINAL SCORE : " + str(TOTAL_SCORE), 40, x = 40, y = 40, w = 720, h = 300, box_color=WHITE, font_color=RED, roundedness=20, transparent=False)
+            score_final_container = TextInBox("fonts/Quick Starter.ttf", "", 40, x = 40, y = 40, w = 720, h = 300, box_color=WHITE, font_color=RED, roundedness=20, transparent=False)
+            score_final_box = TextInBox("fonts/Quick Starter.ttf", "YOUR FINAL SCORE : " + str(TOTAL_SCORE), 40, x = 40, y = 10, w = 720, h = 300, box_color=WHITE, font_color=RED, roundedness=20, transparent=True)
+            good_job_box = TextInBox("fonts/Quick Starter.ttf", "GOOD JOB!", 40, x = 40, y = 50, w = 720, h = 300, box_color=WHITE, font_color=RED, roundedness=20, transparent=True)
 
             main_menu_button_box = TextInBox("fonts/Quick Starter.ttf", "MAIN MENU", 22, x = 40, y = 370, w = 200, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
             main_menu_button_bg = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 40, y = 375, w = 200, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
@@ -948,10 +937,30 @@ while running:
             play_again_bg = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 560, y = 375, w = 200, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
 
             final_score_page.buttonList = [main_menu_button_box, play_again_box]
-            final_score_page.boxList = [main_menu_button_bg, play_again_bg, score_final_box]
+            final_score_page.boxList = [main_menu_button_bg, play_again_bg, score_final_container, score_final_box, good_job_box]
+
+            goat_visible = False
+            if ROUNDS_PER_GAME == 10:
+                goat_visible, rank = update_leaderboard(TOTAL_SCORE)
+            
+
+            if goat_visible:
+                name_input = TextBox(screen, 300, 400, 800, 80, fontSize=50,
+                    borderColour=(255, 0, 0), textColour=(0, 200, 0),
+                    radius=10, borderThickness=5, placeholderText = "NAME")
+                good_job_box.text_to_print = "YOU'RE A GOAT! ENTER YOUR NAME:"
+                good_job_box.initial_font_size = 25
+                good_job_box.update_dimensions(ratio)
 
             if ratio != 1:
+
                 final_score_page.resizePage(ratio)
+
+                if goat_visible:
+                    name_input = TextBox(screen, int(250*ratio), int(250*ratio), int(300*ratio), int(45*ratio), fontSize=int(25*ratio),
+                    borderColour=(255, 0, 0), textColour=RED,
+                    radius=10, borderThickness=5, font = pygame.font.Font("fonts/Quick Starter.ttf", int(25*ratio)), placeholderText = "NAME")
+
             initialised_mode_select = True
             continue
 
@@ -970,6 +979,10 @@ while running:
                 screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
 
                 final_score_page.resizePage(ratio)
+                if goat_visible:
+                    name_input = TextBox(screen, int(100*ratio), int(250*ratio), int(300*ratio), int(45*ratio), fontSize=int(25*ratio),
+                    borderColour=(255, 0, 0), textColour=RED,
+                    radius=10, borderThickness=5, font = pygame.font.Font("fonts/Quick Starter.ttf", int(25*ratio)))
 
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
@@ -998,9 +1011,15 @@ while running:
         screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
         final_score_page.renderBoxes(screen)
         final_score_page.renderButtons(screen)
+        pygame_widgets.update(events)
+
+        
         
         if STATE != State.TOTAL_SCORE:
             initialised_mode_select = False
+            if goat_visible:
+                write_leaderboard(rank, name_input.getText(), TOTAL_SCORE)
+            goat_visible = False
 
 
     if STATE == State.TOTAL_SCORE_VERSUS:
@@ -1028,16 +1047,7 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.VIDEORESIZE:
-                newWidth, newHeight = event.size
-                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
-                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
-                else:
-                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
-                
-                ratio = newWidth/SCREEN_WIDTH
-                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
-
-                final_score_page.resizePage(ratio)
+                video_resize(event, final_score_page)
 
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
@@ -1069,6 +1079,64 @@ while running:
         
         if STATE != State.TOTAL_SCORE_VERSUS:
             initialised_mode_select = False
+
+
+    if STATE == State.MOTIVATION_CRAWL:
+        if not initialised_motivation:
+            back_button_motivation = TextInBox("fonts/Quick Starter.ttf", "BACK", 25, 30, 410, 80, 25, BLACK, RED, 0, True)
+            motivation_page = Page()
+            motivation_page.buttonList = [back_button_motivation]
+            motivation_page.boxList = []
+            if ratio != 1:
+                motivation_page.resizePage(ratio)
+            initialised_motivation = True
+            continue
+    
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.VIDEORESIZE:
+                video_resize(event, motivation_page)
+
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = event.pos
+                for button in motivation_page.buttonList:
+                    if button.text_rect.collidepoint(mouse_pos):
+                        button.font_color = ORANGE
+                    else:
+                        button.font_color = RED
+                motivation_page.resizePage(ratio)
+
+                if any(button.text_rect.collidepoint(mouse_pos) for button in motivation_page.buttonList):
+                    pygame.mouse.set_cursor(handCursor)
+                else:
+                    pygame.mouse.set_cursor(defaultCursor)
+                
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if motivation_button.rect.collidepoint(mouse_pos):
+                    crawl_y_pos = SCREEN_HEIGHT
+                    crawl_active = True
+                    STATE = State.MOTIVATION_CRAWL
+                elif back_button_motivation.text_rect.collidepoint(mouse_pos) and STATE == State.MOTIVATION_CRAWL:
+                    crawl_y_pos = SCREEN_HEIGHT
+                    crawl_active = False
+                    STATE = State.MAIN_MENU
+
+        screen.fill(BLACK)
+        lines = crawl_text.upper().split("\n")
+        if not start_crawl(screen, lines):
+            STATE = State.MAIN_MENU
+            crawl_active = False
+
+        motivation_page.renderBoxes(screen)
+        motivation_page.renderButtons(screen)
+
+        if STATE != State.MOTIVATION_CRAWL:
+            initialised_motivation = False
+
+        screen.blit(back_button_motivation.text_surface, back_button_motivation.text_rect)
 
     pygame.display.flip()
 
