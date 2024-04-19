@@ -1,11 +1,7 @@
-# emphatic response at <50
 # changing submit button without movement
-# how to play
 # find factor using best fit line
-# fill settings page
-# easy and difficult
 # add line between marked locations
-# add menu sounds
+# add save state for hodophobic mode
 
 
 from classes import *
@@ -83,7 +79,7 @@ defaultCursor = pygame.SYSTEM_CURSOR_ARROW
 handCursor = pygame.SYSTEM_CURSOR_HAND
 crossCursor = pygame.SYSTEM_CURSOR_CROSSHAIR
 
-icon = pygame.image.load("logo.png")
+icon = pygame.image.load("textures/logo.png")
 pygame.display.set_icon(icon)
 
 locations_pixel = []
@@ -201,6 +197,17 @@ while running:
     if STATE == State.LEADERBOARD:
         if not initialised_leaderboard:
 
+            df = pd.read_csv("leaderboard.csv")
+
+            leaderboard_page.buttonList = [back_button]
+            leaderboard_page.boxList = [leaderboard_container, rank_box, name_box, score_word_box, note_box]
+
+            for i in range(0,5):
+                r_box = TextInBox("fonts/Quick Starter.ttf", str(df.iloc[i,0]).upper() + '.', 25, 100, 150 + 60*i, 0, 0, RED, RED,15, transparent = True)
+                n_box = TextInBox("fonts/Quick Starter.ttf", str(df.iloc[i,1]).upper(), 25, 400, 150 + 60 * i, 0, 0, RED, RED,15, transparent = True)
+                s_box = TextInBox("fonts/Quick Starter.ttf", str(df.iloc[i, 2]).upper(), 25, 680, 150 + 60 * i, 0, 0, RED, RED,15, transparent = True)
+                leaderboard_page.boxList = leaderboard_page.boxList + [r_box, n_box, s_box]
+
             leaderboard_page.resizePage(ratio)
 
             initialised_leaderboard = True
@@ -244,6 +251,9 @@ while running:
 
     if STATE == State.SETTINGS:
         if not initialised_settings:
+
+
+            name_input = None
             
             vol = pygame.mixer.music.get_volume()
             volume_slider = Slider(screen, int(230*ratio), int(95*ratio), int(140*ratio), int(5*ratio), min = 0, max = 100, colour = RED, handleColour = BLACK, handleRadius = int(5*ratio), initial = vol*100)
@@ -315,6 +325,9 @@ while running:
             for button in mode_select_page.buttonList:
                 button.box_color = RED
 
+            show_information_box_1 = False
+            show_information_box_2 = False
+
             mode_select_page.resizePage(ratio)
             information_page_1.resizePage(ratio)
             information_page_2.resizePage(ratio)
@@ -384,16 +397,16 @@ while running:
 
     if STATE == State.HODO_SELECT:
         if not initialised_hodoselect:
-            hodophilic_box = TextInBox("fonts/Quick Starter.ttf", "SOLO MODE", int(45), x = int(SCREEN_WIDTH//2-360), y = int(160), w = int(385), h = int(90), box_color=RED, font_color=WHITE, roundedness=int(20), transparent=False)
-            hodophilic_bg = TextInBox("fonts/Quick Starter.ttf", "", int(45), x = int(SCREEN_WIDTH//2-360), y = int(165), w = int(385), h = int(90), box_color=DARK_RED, font_color=WHITE, roundedness=int(20), transparent=False)
-            hodophobic_box = TextInBox("fonts/Quick Starter.ttf", "VERSUS MODE", int(45), x = int(SCREEN_WIDTH//2-120), y = int(320), w = int(470), h = int(90), box_color=RED, font_color=WHITE, roundedness=int(20), transparent=False)
-            hodophobic_bg = TextInBox("fonts/Quick Starter.ttf", "", int(45), x = int(SCREEN_WIDTH//2-120), y = int(325), w = int(470), h = int(90), box_color=DARK_RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            solo_box = TextInBox("fonts/Quick Starter.ttf", "SOLO MODE", int(45), x = int(SCREEN_WIDTH//2-360), y = int(160), w = int(385), h = int(90), box_color=RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            solo_bg = TextInBox("fonts/Quick Starter.ttf", "", int(45), x = int(SCREEN_WIDTH//2-360), y = int(165), w = int(385), h = int(90), box_color=DARK_RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            versus_box = TextInBox("fonts/Quick Starter.ttf", "VERSUS MODE", int(45), x = int(SCREEN_WIDTH//2-120), y = int(320), w = int(470), h = int(90), box_color=RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            versus_bg = TextInBox("fonts/Quick Starter.ttf", "", int(45), x = int(SCREEN_WIDTH//2-120), y = int(325), w = int(470), h = int(90), box_color=DARK_RED, font_color=WHITE, roundedness=int(20), transparent=False)
 
-            back_box = TextInBox("fonts/Quick Starter.ttf", "BACK", 22, x = 40, y = 20, w = 90, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
-            back_bg = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 40, y = 25, w = 90, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
+            back_box_hodo = TextInBox("fonts/Quick Starter.ttf", "BACK", 22, x = 40, y = 20, w = 90, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
+            back_bg_hodo = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 40, y = 25, w = 90, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
 
-            hodo_select_page.boxList = [hodophilic_bg,hodophobic_bg, back_bg]
-            hodo_select_page.buttonList = [hodophilic_box, hodophobic_box, back_box]
+            hodo_select_page.boxList = [solo_bg, versus_bg, back_bg_hodo]
+            hodo_select_page.buttonList = [solo_box, versus_box, back_box_hodo]
 
             if ratio != 1:
                 hodo_select_page.resizePage(ratio)
@@ -405,16 +418,7 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.VIDEORESIZE:
-                newWidth, newHeight = event.size
-                if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
-                    newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
-                else:
-                    newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
-                
-                ratio = newWidth/SCREEN_WIDTH
-                screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
-
-                hodo_select_page.resizePage(ratio)
+                video_resize(event, hodo_select_page)
 
             elif event.type == pygame.MOUSEMOTION:
                 mouse_pos = event.pos
@@ -434,11 +438,11 @@ while running:
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
-                if hodophilic_box.rect.collidepoint(mouse_pos):
+                if solo_box.rect.collidepoint(mouse_pos):
                     STATE = State.GAME_HODOPHOBE
-                elif hodophobic_box.rect.collidepoint(mouse_pos):
+                elif versus_box.rect.collidepoint(mouse_pos):
                     STATE = State.GAME_HODOPHOBE_VERSUS
-                elif back_box.rect.collidepoint(mouse_pos):
+                elif back_box_hodo.rect.collidepoint(mouse_pos):
                     STATE = State.MODE_SELECT
 
 
@@ -455,7 +459,7 @@ while running:
 
         if not initialised_hodophobe:
 
-            cur_loc_indexes = random.sample(range(23), ROUNDS_PER_GAME//2)
+            cur_loc_indexes = random.sample(range(DISTINCT_LOCS), ROUNDS_PER_GAME//2)
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
@@ -464,18 +468,18 @@ while running:
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
             submit_button = TextInBox("fonts/arial.ttf", "SUBMIT", 15, 50, 410, 190, 25, RED, WHITE, 5)
-            camp_map = Textures("campus_map.png", 300, 100, 490, 280)
+            camp_map = Textures("textures/campus_map.png", 300, 100, 490, 280)
             camp_map_rect = TextInBox("fonts/Quick Starter.ttf", "", 1, 300, 100, 490, 280, BLACK, WHITE, 0, transparent = True)
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 
-            marker_texture = Textures("marker.png", -150, -150, 18, 29)
-            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
+            marker_texture = Textures("textures/marker.png", -150, -150, 18, 29)
+            blue_marker_texture = Textures("textures/blue_marker.png", -150, -150, 12, 19)
 
             quit_to_box = TextInBox("fonts/ARIBL0.ttf", "Back To", 13, 660, 40, 100, 0, WHITE, RED, 5, True, BLACK)
             main_menu_box = TextInBox("fonts/ARIBL0.ttf", "Main Menu", 13, 660, 55, 100, 0, WHITE, RED, 5, True, BLACK)
             main_menu_button = TextInBox("fonts/ARIBL0.ttf", "", 13, 660, 32, 100, 33, WHITE, RED, 5)
 
-            logo_texture = Textures("logo.png", 65, 260, 150, 138)
+            logo_texture = Textures("textures/logo.png", 65, 260, 150, 138)
             score = 0
             score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 325, 32, 150, 35, WHITE, RED, 5)
             select_location_box = TextInBox("fonts/Quick Starter.ttf", "PLEASE PICK A LOCATION", 15, 300, 400, 490, 35, WHITE, RED, 5)
@@ -549,6 +553,14 @@ while running:
                             select_location_box.text_to_print = "YOU SCORED " + str(additional_score) + " POINTS, BEING " + str(dis) + " M AWAY FROM TARGET"
                             select_location_box.initial_font_size = 12
                             select_location_box.update_dimensions(ratio)
+
+                            if dis<=25:
+                                wow = pygame.mixer.Sound("wow.mp3")
+                                wow.play()
+                            elif dis >= 200:
+                                fail = pygame.mixer.Sound("fail.mp3")
+                                fail.play()
+
                             submit_button.text_to_print = "NEXT"
                     
                     elif camp_map_rect.rect.collidepoint(mouse_pos):
@@ -597,7 +609,7 @@ while running:
     if STATE == State.GAME_HODOPHOBE_VERSUS:
         if not initialised_hodophobe_versus:
 
-            cur_loc_indexes = random.sample(range(23), ROUNDS_PER_GAME//2)
+            cur_loc_indexes = random.sample(range(DISTINCT_LOCS), ROUNDS_PER_GAME//2)
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
@@ -606,19 +618,19 @@ while running:
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
             submit_button = TextInBox("fonts/arial.ttf", "SUBMIT", 15, 50, 410, 190, 25, RED, WHITE, 5)
-            camp_map = Textures("campus_map.png", 300, 100, 490, 280)
+            camp_map = Textures("textures/campus_map.png", 300, 100, 490, 280)
             camp_map_rect = TextInBox("fonts/Quick Starter.ttf", "", 1, 300, 100, 490, 280, BLACK, WHITE, 0, transparent = True)
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 
-            marker_texture = Textures("marker.png", -150, -150, 18, 29)
-            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
-            green_marker_texture = Textures("green_marker.png", -150, -150, 12, 19)
+            marker_texture = Textures("textures/marker.png", -150, -150, 18, 29)
+            blue_marker_texture = Textures("textures/blue_marker.png", -150, -150, 12, 19)
+            green_marker_texture = Textures("textures/green_marker.png", -150, -150, 12, 19)
 
             quit_to_box = TextInBox("fonts/ARIBL0.ttf", "Back To", 13, 660, 40, 100, 0, WHITE, RED, 5, True, BLACK)
             main_menu_box = TextInBox("fonts/ARIBL0.ttf", "Main Menu", 13, 660, 55, 100, 0, WHITE, RED, 5, True, BLACK)
             main_menu_button = TextInBox("fonts/ARIBL0.ttf", "", 13, 660, 32, 100, 33, WHITE, RED, 5)
 
-            logo_texture = Textures("logo.png", 65, 260, 150, 138)
+            logo_texture = Textures("textures/logo.png", 65, 260, 150, 138)
             score1 = 0
             score2 = 0
             x1 = 0
@@ -789,7 +801,7 @@ while running:
             update_thread = threading.Thread(target = update_location)
             update_thread.start()
 
-            cur_loc_indexes = random.sample(range(23), ROUNDS_PER_GAME//2)
+            cur_loc_indexes = random.sample(range(DISTINCT_LOCS), ROUNDS_PER_GAME//2)
 
             image_loc = "images/" + str(cur_loc_indexes[0]+1) + ".jpg"
 
@@ -798,17 +810,17 @@ while running:
             image_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 5, 5, 280, 440, WHITE, WHITE, 10)
             image = Textures(image_loc, 55, 10, 180, 240)
             submit_button = TextInBox("fonts/arial.ttf", "FIX MY LOCATION", 15, 50, 410, 190, 25, RED, WHITE, 5)
-            camp_map = Textures("campus_map.png", 300, 100, 490, 280)
+            camp_map = Textures("textures/campus_map.png", 300, 100, 490, 280)
             camp_map_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 295, 95, 500, 290, BLACK, WHITE, 5)
 
-            marker_texture = Textures("marker.png", -150, -150, 18, 29)
-            blue_marker_texture = Textures("blue_marker.png", -150, -150, 12, 19)
+            marker_texture = Textures("textures/marker.png", -150, -150, 18, 29)
+            blue_marker_texture = Textures("textures/blue_marker.png", -150, -150, 12, 19)
 
             quit_to_box = TextInBox("fonts/ARIBL0.ttf", "Back To", 13, 660, 40, 100, 0, WHITE, RED, 5, True, BLACK)
             main_menu_box = TextInBox("fonts/ARIBL0.ttf", "Main Menu", 13, 660, 55, 100, 0, WHITE, RED, 5, True, BLACK)
             main_menu_button = TextInBox("fonts/ARIBL0.ttf", "", 13, 660, 32, 100, 33, WHITE, RED, 5)
 
-            logo_texture = Textures("logo.png", 65, 260, 150, 138)
+            logo_texture = Textures("textures/logo.png", 65, 260, 150, 138)
             score = 0
             score_box = TextInBox("fonts/ARIBL0.ttf", "SCORE:" + str(score), 25, 325, 32, 150, 35, WHITE, RED, 5)
             select_location_box = TextInBox("fonts/Quick Starter.ttf", "PLEASE GO TO THE LOCATION", 15, 300, 400, 490, 35, WHITE, RED, 5)
@@ -873,6 +885,11 @@ while running:
                         marker_texture.X, marker_texture.Y =  int(coord_image[0])-9, int(coord_image[1])-27
                         marker_texture.update_dimensions(ratio)
                         additional_score = max(RADIUS_OF_SCORE - dis, 0)
+
+                        if dis <=25:
+                            success = pygame.mixer.Sound("success.mp3")
+                            success.play()
+
                         score = score + additional_score
                         score_box.text_to_print = "Score:" + str(score)
                         score_box.update_dimensions(ratio)
@@ -939,8 +956,13 @@ while running:
             final_score_page.buttonList = [main_menu_button_box, play_again_box]
             final_score_page.boxList = [main_menu_button_bg, play_again_bg, score_final_container, score_final_box, good_job_box]
 
+
+            volume_slider = None
+
+            rounds_slider = None
+
             goat_visible = False
-            if ROUNDS_PER_GAME == 10:
+            if ROUNDS_PER_GAME == 10 and prevSTATE == State.GAME_HODOPHOBE:
                 goat_visible, rank = update_leaderboard(TOTAL_SCORE)
             
 
@@ -1116,7 +1138,7 @@ while running:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if motivation_button.rect.collidepoint(mouse_pos):
-                    crawl_y_pos = SCREEN_HEIGHT
+                    # crawl_y_pos = SCREEN_HEIGHT
                     crawl_active = True
                     STATE = State.MOTIVATION_CRAWL
                 elif back_button_motivation.text_rect.collidepoint(mouse_pos) and STATE == State.MOTIVATION_CRAWL:

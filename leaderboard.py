@@ -34,17 +34,8 @@ leaderboard_page = Page()
 leaderboard_container = TextInBox("fonts/Quick Starter.ttf", "", 1, 40, 60, 720, 370, GRAY, GRAY,15)
 back_button = TextInBox("fonts/Quick Starter.ttf", "BACK", 22, x = 10, y = 10, w = 90, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
 
-df = pd.read_csv("leaderboard.csv")
-
 rank_box = TextInBox("fonts/Quick Starter.ttf", "RANK", 25, 100, 90, 0, 0, RED, RED,15, transparent = True)
 name_box = TextInBox("fonts/Quick Starter.ttf", "NAME", 25, 400, 90, 0, 0, RED, RED,15, transparent = True)
-score_box = TextInBox("fonts/Quick Starter.ttf", "SCORE", 25, 680, 90, 0, 0, RED, RED,15, transparent = True)
+score_word_box = TextInBox("fonts/Quick Starter.ttf", "SCORE", 25, 680, 90, 0, 0, RED, RED,15, transparent = True)
 
-leaderboard_page.buttonList = [back_button]
-leaderboard_page.boxList = [leaderboard_container, rank_box, name_box, score_box]
-
-for i in range(0,5):
-    rank_box = TextInBox("fonts/Quick Starter.ttf", str(df.iloc[i,0]).upper() + '.', 25, 100, 150 + 60*i, 0, 0, RED, RED,15, transparent = True)
-    name_box = TextInBox("fonts/Quick Starter.ttf", str(df.iloc[i,1]).upper(), 25, 400, 150 + 60 * i, 0, 0, RED, RED,15, transparent = True)
-    score_box = TextInBox("fonts/Quick Starter.ttf", str(df.iloc[i, 2]).upper(), 25, 680, 150 + 60 * i, 0, 0, RED, RED,15, transparent = True)
-    leaderboard_page.boxList = leaderboard_page.boxList + [rank_box, name_box, score_box]
+note_box = TextInBox("fonts/Quick Starter.ttf", "NOTE: LEADERS ARE ONLY FROM HODOPHOBIC MODE, WHEN ROUNDS = 10", 10, 140, 20, 600, 25, WHITE, RED, 8 )
