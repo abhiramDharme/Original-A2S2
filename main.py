@@ -18,26 +18,19 @@ from leaderboard import *
 from mode_select import *
 from crawl import *
 
-
-import random
-from enum import Enum
 import pygame
 import pygame_widgets
 from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
+
+
+import random
+from enum import Enum
 import sys
 import csv
 import threading
 import pandas as pd
 
-location = (28.546758, 77.185148)
-thread_active = False
-
-def update_location():
-    global location
-    global thread_active
-    while thread_active:
-        location = get_location()
 
 class State(Enum):
     MAIN_MENU = 1
@@ -51,17 +44,42 @@ class State(Enum):
     HODO_SELECT = 9
     TOTAL_SCORE_VERSUS = 10
     LEADERBOARD = 11
+    LOAD_SELECT = 12
 
 
 prevSTATE = State.MAIN_MENU
 STATE = State.MAIN_MENU
 IMAGE = 0
 
+location = (28.546758, 77.185148)
+thread_active = False
+
+def update_location():
+    global location
+    global thread_active
+    while thread_active:
+        location = get_location()
 
 def change_no_of_rounds(val):
     global ROUNDS_PER_GAME
     if val != None:
         ROUNDS_PER_GAME = 2 * val
+
+def video_resize(event, page):
+    global newWidth
+    global newHeight
+    global ratio
+    global screen
+
+    newWidth, newHeight = event.size
+    if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
+        newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
+    else:
+        newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
+    ratio = newWidth/SCREEN_WIDTH
+    screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+
+    page.resizePage(ratio)
 
 
 pygame.mixer.init()
@@ -103,22 +121,15 @@ pygame.mixer.music.load('bgm.mp3')
 pygame.mixer.music.play(-1)
 pygame.mixer.music.set_volume(0.50)
 
-def video_resize(event, page):
-    global newWidth
-    global newHeight
-    global ratio
-    global screen
+ROUNDS_PER_GAME = 10
 
-    newWidth, newHeight = event.size
-    if newWidth * SCREEN_HEIGHT / SCREEN_WIDTH > newHeight:
-        newWidth = newHeight * SCREEN_WIDTH / SCREEN_HEIGHT
-    else:
-        newHeight = newWidth * SCREEN_HEIGHT / SCREEN_WIDTH
-    ratio = newWidth/SCREEN_WIDTH
-    screen = pygame.display.set_mode((newWidth, newHeight), pygame.RESIZABLE)
+with open("game_data/settings_state.csv", 'r') as file:
+    reader = csv.reader(file)
+    line = list(reader)
+    pygame.mixer.music.set_volume(float(line[0][0]))
+    ROUNDS_PER_GAME = int(line[0][1])
+    
 
-
-    page.resizePage(ratio)
 
 running = True
 
@@ -126,7 +137,7 @@ initialised_hodophobe = False
 initialised_hodophobe_versus = False
 initialised_hodophile = False
 initialised_hodoselect = False
-
+initialised_loadselect = False
 
 
 hodophobe_page = Page()
@@ -134,6 +145,7 @@ hodophobe_versus_page = Page()
 hodophile_page = Page()
 final_score_page = Page()
 hodo_select_page = Page()
+load_select_page = Page()
 
 cur_loc_list = []
 
@@ -197,7 +209,7 @@ while running:
     if STATE == State.LEADERBOARD:
         if not initialised_leaderboard:
 
-            df = pd.read_csv("leaderboard.csv")
+            df = pd.read_csv("game_data/leaderboard.csv")
 
             leaderboard_page.buttonList = [back_button]
             leaderboard_page.boxList = [leaderboard_container, rank_box, name_box, score_word_box, note_box]
@@ -939,6 +951,69 @@ while running:
             update_thread.join()
 
 
+    if STATE == State.LOAD_SELECT:
+        if not initialised_loadselect:
+            load_box = TextInBox("fonts/Quick Starter.ttf", "LOAD GAME", int(45), x = int(SCREEN_WIDTH//2-360), y = int(160), w = int(385), h = int(90), box_color=RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            load_bg = TextInBox("fonts/Quick Starter.ttf", "", int(45), x = int(SCREEN_WIDTH//2-360), y = int(165), w = int(385), h = int(90), box_color=DARK_RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            new_box = TextInBox("fonts/Quick Starter.ttf", "NEW GAME", int(45), x = int(SCREEN_WIDTH//2-120), y = int(320), w = int(470), h = int(90), box_color=RED, font_color=WHITE, roundedness=int(20), transparent=False)
+            new_bg = TextInBox("fonts/Quick Starter.ttf", "", int(45), x = int(SCREEN_WIDTH//2-120), y = int(325), w = int(470), h = int(90), box_color=DARK_RED, font_color=WHITE, roundedness=int(20), transparent=False)
+
+            back_box_load = TextInBox("fonts/Quick Starter.ttf", "BACK", 22, x = 40, y = 20, w = 90, h = 40, box_color=RED, font_color=WHITE, roundedness=10, transparent=False)
+            back_bg_load = TextInBox("fonts/Quick Starter.ttf", "", 22, x = 40, y = 25, w = 90, h = 40, box_color=DARK_RED, font_color=WHITE, roundedness=10, transparent=False)
+
+            load_select_page.boxList = [load_bg, new_bg, back_bg_load]
+            load_select_page.buttonList = [load_box, new_box, back_box_load]
+
+            if ratio != 1:
+                load_select_page.resizePage(ratio)
+            initialised_loadselect = True
+            continue
+            
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.VIDEORESIZE:
+                video_resize(event, load_select_page)
+
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_pos = event.pos
+                for button in load_select_page.buttonList:
+                    if button.rect.collidepoint(mouse_pos):
+                        button.box_color = ORANGE
+                        
+                    else:
+                        button.box_color = RED
+                
+                hodo_select_page.resizePage(ratio)
+
+                if any(button.rect.collidepoint(mouse_pos) for button in load_select_page.buttonList):
+                    pygame.mouse.set_cursor(handCursor)
+                else:
+                    pygame.mouse.set_cursor(defaultCursor)
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if load_box.rect.collidepoint(mouse_pos):
+                    STATE = State.GAME_HODOPHILE
+                    #with open("saved_state.txt") 33333
+
+
+                elif versus_box.rect.collidepoint(mouse_pos):
+                    STATE = State.GAME_HODOPHILE
+                elif back_box_load.rect.collidepoint(mouse_pos):
+                    STATE = State.MODE_SELECT
+
+
+        screen.blit(pygame.transform.smoothscale(main_menu_bg, (newWidth, newHeight)), (0, 0))
+        load_select_page.renderBoxes(screen)
+        load_select_page.renderButtons(screen)
+
+        
+        if STATE != State.LOAD_SELECT:
+            initialised_loadselect = False
+
+
     if STATE == State.TOTAL_SCORE:
 
         if not initialised_mode_select:
@@ -1161,6 +1236,11 @@ while running:
         screen.blit(back_button_motivation.text_surface, back_button_motivation.text_rect)
 
     pygame.display.flip()
+
+with open("game_data/settings_state.csv", "w", newline = '') as file:
+    writer = csv.writer(file)
+
+    writer.writerow([pygame.mixer.music.get_volume(), ROUNDS_PER_GAME])
 
 pygame.quit()
 sys.exit()
